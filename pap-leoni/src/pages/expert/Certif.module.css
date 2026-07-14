@@ -1,0 +1,466 @@
+/* ═══════════════════════════════════════════════
+   Certif.module.css
+   Palette: Navy #002855 · Bleu #0066CC · Gris · Blanc
+   ═══════════════════════════════════════════════ */
+
+/* ─── Tokens ─────────────────────────────────── */
+.page {
+  --navy:   #002855;
+  --blue:   #0066CC;
+  --blue2:  #1A7ACC;
+  --gray50: #F7F9FC;
+  --gray100:#EEF2F8;
+  --gray200:#DAE2EF;
+  --gray400:#8A9BBC;
+  --gray600:#4A5568;
+  --gray900:#0D1520;
+  --radius: 10px;
+  --shadow: 0 2px 12px rgba(0,40,85,0.08);
+  --shadowHov: 0 6px 24px rgba(0,40,85,0.13);
+  font-family: 'DM Sans', sans-serif;
+  color: var(--gray900);
+  width: 100%;
+  animation: fadeUp 0.3s ease;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ─── Loader ─────────────────────────────────── */
+.loadWrap { display:flex; align-items:center; justify-content:center; height:50vh; gap:0.875rem; color:var(--gray400,#8A9BBC); font-family:'DM Sans',sans-serif; font-size:0.9rem; }
+.loadSpinner { width:22px; height:22px; border:2px solid var(--gray200,#DAE2EF); border-top-color:var(--blue,#0066CC); border-radius:50%; animation:spin 0.7s linear infinite; flex-shrink:0; }
+
+/* ─── Header ─────────────────────────────────── */
+.header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; gap:1rem; }
+.headerLeft { display:flex; align-items:center; gap:0.875rem; }
+.headerIcon {
+  width:44px; height:44px; border-radius:12px;
+  background:var(--navy); color:#fff;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.headerIcon svg { width:20px; height:20px; }
+.headerTitle { font-family:'Rajdhani',sans-serif; font-size:1.6rem; font-weight:700; color:var(--navy); margin:0; line-height:1.1; }
+.headerSub   { font-size:0.8rem; color:var(--gray400); margin:0; }
+.headerActions { display:flex; align-items:center; gap:0.625rem; flex-shrink:0; }
+
+/* ─── Bouton Nouveau ─────────────────────────── */
+.btnNew {
+  display:inline-flex; align-items:center; gap:0.45rem;
+  background:var(--navy); color:#fff; border:none;
+  border-radius:9px; padding:0.625rem 1.125rem;
+  font-size:0.84rem; font-weight:600; cursor:pointer;
+  transition:all 0.18s; white-space:nowrap;
+  box-shadow:0 2px 8px rgba(0,40,85,0.18);
+}
+.btnNew svg { width:16px; height:16px; }
+.btnNew:hover { background:var(--blue); transform:translateY(-1px); box-shadow:0 4px 14px rgba(0,102,204,0.28); }
+
+/* ─── Carte certif active ────────────────────── */
+.activeCard {
+  background:var(--navy); color:#fff;
+  border-radius:14px; padding:1.25rem 1.5rem;
+  display:flex; justify-content:space-between; align-items:center; gap:1rem;
+  margin-bottom:1.25rem;
+  box-shadow:0 4px 20px rgba(0,40,85,0.2);
+}
+.activeCardLeft  { display:flex; align-items:center; gap:1rem; }
+.activeCardDot   { width:10px; height:10px; background:#fff; border-radius:50%; box-shadow:0 0 0 4px rgba(255,255,255,0.2); flex-shrink:0; }
+.activeCardLabel { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.55); margin-bottom:0.2rem; }
+.activeCardTitle { font-family:'Rajdhani',sans-serif; font-size:1.2rem; font-weight:700; color:#fff; line-height:1.1; }
+.activeCardMeta  { display:flex; align-items:center; gap:0.375rem; flex-wrap:wrap; margin-top:0.3rem; font-size:0.78rem; color:rgba(255,255,255,0.6); }
+.activeCardActions { display:flex; gap:0.5rem; flex-shrink:0; }
+
+/* Icone button blanc (sur fond navy) */
+.iconBtn {
+  width:36px; height:36px; border-radius:8px;
+  background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.15);
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:all 0.18s; flex-shrink:0;
+}
+.iconBtn svg { width:16px; height:16px; }
+.iconBtn:hover { background:rgba(255,255,255,0.22); }
+
+/* Alerte aucune certif active */
+.noActiveCard {
+  display:flex; align-items:center; gap:0.75rem;
+  background:var(--gray50); border:1.5px dashed var(--gray200);
+  border-radius:12px; padding:1rem 1.25rem;
+  margin-bottom:1.25rem; font-size:0.84rem; color:var(--gray600);
+}
+.noActiveCard svg { width:17px; height:17px; color:var(--gray400); flex-shrink:0; }
+
+/* ─── Filtres ────────────────────────────────── */
+.filterRow { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.25rem; }
+.chip {
+  display:inline-flex; align-items:center; gap:0.4rem;
+  background:#fff; border:1.5px solid var(--gray200);
+  border-radius:8px; padding:0.38rem 0.875rem;
+  font-size:0.8rem; font-weight:600; color:var(--gray600);
+  cursor:pointer; transition:all 0.18s;
+}
+.chip:hover { border-color:var(--blue); color:var(--blue); }
+.chipActive { background:var(--navy); border-color:var(--navy); color:#fff; }
+.chipCount  { font-size:0.7rem; padding:1px 6px; border-radius:99px; background:rgba(255,255,255,0.25); }
+.chip:not(.chipActive) .chipCount { background:var(--gray100); color:var(--gray400); }
+
+/* ─── Liste ──────────────────────────────────── */
+.list { display:flex; flex-direction:column; gap:0; border-radius:14px; overflow:hidden; border:1px solid var(--gray200); background:#fff; box-shadow:var(--shadow); }
+
+.row {
+  display:flex; align-items:center; gap:0; position:relative;
+  padding:0.875rem 1.25rem 0.875rem 0;
+  border-bottom:1px solid var(--gray100);
+  transition:background 0.15s;
+  animation:fadeUp 0.3s ease both;
+}
+.row:last-child  { border-bottom:none; }
+.row:hover { background:var(--gray50); }
+.rowActive { background:#F0F5FF !important; }
+.rowActive:hover { background:#E8F0FE !important; }
+
+/* Indicateur gauche coloré */
+.rowIndicator { width:4px; min-height:100%; align-self:stretch; flex-shrink:0; margin-right:1.125rem; transition:background 0.2s; }
+
+/* Infos */
+.rowMain { flex:1; min-width:0; }
+.rowTitleRow { display:flex; align-items:center; gap:0.625rem; margin-bottom:0.2rem; }
+.rowTitle { font-size:0.9rem; font-weight:700; color:var(--navy); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rowActiveBadge { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; background:var(--navy); color:#fff; padding:2px 7px; border-radius:99px; flex-shrink:0; }
+.rowDesc { font-size:0.78rem; color:var(--gray400); margin-bottom:0.3rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rowMeta { display:flex; align-items:center; flex-wrap:wrap; gap:0.35rem; font-size:0.76rem; color:var(--gray400); }
+.rowMetaItem { display:inline-flex; align-items:center; gap:0.25rem; }
+.rowMetaItem svg { width:12px; height:12px; }
+.rowMetaDot { width:3px; height:3px; background:var(--gray200); border-radius:50%; }
+.metaWarn { color:#8A6A0A; font-weight:600; }
+
+/* Statut */
+.rowStatut { display:flex; align-items:center; gap:0.45rem; padding:0 1.25rem; flex-shrink:0; min-width:140px; }
+.dotSm { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.rowStatutLabel { font-size:0.78rem; font-weight:600; color:var(--gray600); }
+
+/* Actions (icônes) */
+.rowActions { display:flex; align-items:center; gap:0.375rem; flex-shrink:0; padding-right:0.25rem; }
+.iconBtnSm {
+  width:32px; height:32px; border-radius:7px;
+  background:transparent; border:1.5px solid var(--gray200);
+  color:var(--gray600); display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:all 0.18s; flex-shrink:0;
+}
+.iconBtnSm svg { width:15px; height:15px; }
+.iconBtnSm:hover { background:var(--navy); border-color:var(--navy); color:#fff; }
+.iconBtnSm:disabled { opacity:0.4; cursor:not-allowed; }
+.iconBtnLoading { opacity:0.6; }
+.spinSm { width:13px; height:13px; border:2px solid var(--gray200); border-top-color:var(--blue); border-radius:50%; animation:spin 0.6s linear infinite; }
+
+/* ─── Empty ──────────────────────────────────── */
+.empty { text-align:center; padding:3.5rem 2rem; background:#fff; border-radius:14px; border:1.5px dashed var(--gray200); }
+.emptyIcon { display:inline-flex; align-items:center; justify-content:center; width:56px; height:56px; background:var(--gray100); border-radius:14px; color:var(--gray400); margin-bottom:1rem; }
+.emptyIcon svg { width:24px; height:24px; }
+.emptyTitle { color:var(--gray600); font-size:0.9rem; margin-bottom:1.25rem; }
+
+/* ─── Overlay + Panel ───────────────────────── */
+.overlay {
+  position:fixed; inset:0; z-index:600;
+  background:rgba(0,10,30,0.45); backdrop-filter:blur(4px);
+  display:flex; align-items:center; justify-content:center;
+  padding:1.5rem;
+  animation:fadeIn 0.18s ease;
+}
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+.panel {
+  width:100%; max-width:520px;
+  max-height:90vh;
+  background:#fff;
+  border-radius:18px;
+  display:flex; flex-direction:column;
+  box-shadow:0 24px 80px rgba(0,0,0,0.22), 0 4px 20px rgba(0,0,0,0.1);
+  animation:popIn 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  overflow:hidden;
+}
+@keyframes popIn { from{transform:scale(0.93) translateY(12px);opacity:0} to{transform:none;opacity:1} }
+
+.panelHead {
+  display:flex; justify-content:space-between; align-items:flex-start;
+  padding:1.5rem 1.75rem 1.25rem;
+  border-bottom:1px solid var(--gray100);
+  flex-shrink:0;
+  background: linear-gradient(to bottom, #fff, #fdfdff);
+}
+.panelTitle { font-family:'Rajdhani',sans-serif; font-size:1.35rem; font-weight:700; color:var(--navy); line-height:1.2; }
+.panelSub   { font-size:0.78rem; color:var(--gray400); margin-top:3px; }
+.panelClose {
+  width:34px; height:34px; border-radius:8px;
+  background:var(--gray100); border:none; color:var(--gray600);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:all 0.18s; flex-shrink:0; margin-left:1rem;
+}
+.panelClose svg { width:16px; height:16px; }
+.panelClose:hover { background:var(--navy); color:#fff; }
+
+.panelBody  { flex:1; overflow-y:auto; padding:1.5rem 1.75rem; display:flex; flex-direction:column; gap:1.125rem; }
+.panelBody::-webkit-scrollbar { width:4px; }
+.panelBody::-webkit-scrollbar-thumb { background:var(--gray200); border-radius:4px; }
+
+.panelActions { display:flex; flex-direction:column; gap:0.625rem; flex-shrink:0; padding:1.25rem 1.75rem; border-top:1px solid var(--gray100); background:#fafbfd; }
+
+/* ─── Panel Détail ───────────────────────────── */
+.detailStatus { display:flex; align-items:center; gap:0.5rem; }
+.dotStatus { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.detailStatusLabel { font-size:0.82rem; font-weight:700; color:var(--gray600); }
+.activeBadge { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; background:var(--navy); color:#fff; padding:2px 8px; border-radius:99px; }
+.detailDesc { font-size:0.84rem; color:var(--gray600); background:var(--gray50); border-radius:8px; padding:0.75rem 0.875rem; border-left:3px solid var(--gray200); line-height:1.5; }
+
+.detailGrid { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
+.detailItem { display:flex; align-items:center; gap:0.625rem; background:var(--gray50); border-radius:9px; padding:0.75rem; border:1px solid var(--gray100); }
+.detailIcon { width:32px; height:32px; border-radius:7px; background:#fff; border:1px solid var(--gray200); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--navy); }
+.detailIcon svg { width:14px; height:14px; }
+.detailLabel { font-size:0.7rem; color:var(--gray400); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
+.detailVal   { font-size:0.9rem; font-weight:700; color:var(--navy); font-family:'Rajdhani',sans-serif; }
+
+.detailSection { display:flex; flex-direction:column; gap:0.5rem; }
+.detailSectionTitle { display:flex; align-items:center; gap:0.4rem; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--gray400); }
+.detailSectionTitle svg { width:13px; height:13px; }
+.detailSectionCard { background:var(--gray50); border-radius:9px; padding:0.875rem; border:1px solid var(--gray100); }
+.detailSectionName { font-size:0.875rem; font-weight:700; color:var(--navy); margin-bottom:0.3rem; }
+.detailSectionMeta { display:flex; align-items:center; gap:0.4rem; font-size:0.78rem; color:var(--gray400); flex-wrap:wrap; }
+
+/* Points séparateurs */
+.dot2 { width:3px; height:3px; background:var(--gray200); border-radius:50%; flex-shrink:0; display:inline-block; vertical-align:middle; }
+
+/* Actions panel */
+.btnActivate {
+  display:flex; align-items:center; justify-content:center; gap:0.5rem;
+  background:var(--navy); color:#fff; border:none;
+  border-radius:9px; padding:0.7rem 1.25rem;
+  font-size:0.875rem; font-weight:600; cursor:pointer; transition:all 0.18s;
+  box-shadow:0 2px 8px rgba(0,40,85,0.18);
+}
+.btnActivate svg { width:18px; height:18px; }
+.btnActivate:hover { background:var(--blue); }
+
+.btnDel {
+  display:flex; align-items:center; justify-content:center; gap:0.5rem;
+  background:transparent; color:var(--gray600);
+  border:1.5px solid var(--gray200); border-radius:9px;
+  padding:0.6rem 1.25rem; font-size:0.84rem; font-weight:600;
+  cursor:pointer; transition:all 0.18s;
+}
+.btnDel svg { width:15px; height:15px; }
+.btnDel:hover { border-color:#8A9BBC; color:var(--navy); background:var(--gray50); }
+
+.btnDelConfirm {
+  background:var(--navy); color:#fff; border:none;
+  border-radius:7px; padding:0.5rem 1rem;
+  font-size:0.8rem; font-weight:600; cursor:pointer; transition:background 0.18s;
+}
+.btnDelConfirm:hover { background:var(--blue); }
+.btnDelConfirm:disabled { opacity:0.6; cursor:not-allowed; }
+
+.confirmRow { display:flex; align-items:center; flex-wrap:wrap; gap:0.5rem; background:var(--gray50); border-radius:9px; padding:0.75rem; border:1px solid var(--gray200); }
+.confirmMsg { display:flex; align-items:center; gap:0.4rem; font-size:0.8rem; color:var(--gray600); flex:1; }
+.confirmMsg svg { width:15px; height:15px; flex-shrink:0; }
+
+.activeNotice { display:flex; align-items:flex-start; gap:0.5rem; font-size:0.8rem; color:var(--gray600); background:var(--gray50); border-radius:9px; padding:0.75rem; border:1px solid var(--gray100); }
+.activeNotice svg { width:14px; height:14px; flex-shrink:0; margin-top:1px; }
+
+/* ─── Panel Paramètres ───────────────────────── */
+.paramNotice { display:flex; align-items:flex-start; gap:0.5rem; font-size:0.8rem; color:var(--gray600); background:var(--gray50); border:1px solid var(--gray200); border-radius:9px; padding:0.75rem; }
+.paramNotice svg { width:14px; height:14px; flex-shrink:0; margin-top:1px; }
+
+.paramField { display:flex; flex-direction:column; gap:0.375rem; }
+.paramLabel { font-size:0.75rem; font-weight:700; color:var(--gray600); letter-spacing:0.03em; text-transform:uppercase; }
+.paramInput {
+  width:100%; padding:0.6rem 0.875rem;
+  border:1.5px solid var(--gray200); border-radius:8px;
+  font-size:0.875rem; font-family:'DM Sans',sans-serif; color:var(--navy);
+  outline:none; transition:border-color 0.18s; background:#fff; box-sizing:border-box;
+}
+.paramInput:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(0,102,204,0.08); }
+.paramTextarea {
+  width:100%; padding:0.6rem 0.875rem;
+  border:1.5px solid var(--gray200); border-radius:8px;
+  font-size:0.875rem; font-family:'DM Sans',sans-serif; color:var(--navy);
+  outline:none; resize:vertical; transition:border-color 0.18s; box-sizing:border-box;
+}
+.paramTextarea:focus { border-color:var(--blue); }
+
+.paramSection { display:flex; flex-direction:column; gap:0.625rem; }
+.paramSectionTitle { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--gray400); }
+.paramToggleRow { display:flex; align-items:center; justify-content:space-between; gap:1rem; background:var(--gray50); border:1px solid var(--gray100); border-radius:9px; padding:0.875rem; }
+.paramToggleLabel { font-size:0.875rem; font-weight:600; color:var(--navy); margin-bottom:2px; }
+.paramToggleHint  { font-size:0.76rem; color:var(--gray400); line-height:1.4; }
+.paramInfoCard { background:var(--gray50); border-radius:9px; border:1px solid var(--gray100); overflow:hidden; }
+.paramInfoRow { display:flex; justify-content:space-between; align-items:center; padding:0.625rem 0.875rem; border-bottom:1px solid var(--gray100); }
+.paramInfoRow:last-child { border-bottom:none; }
+.paramInfoLabel { font-size:0.8rem; color:var(--gray400); }
+.paramInfoVal   { font-size:0.8rem; font-weight:600; color:var(--navy); }
+
+/* Toggle switch CSS */
+.toggleSwitch {
+  position:relative; width:44px; height:24px;
+  border-radius:99px; border:none;
+  background:var(--gray200); cursor:pointer;
+  transition:background 0.25s; flex-shrink:0; padding:0;
+}
+.toggleOn  { background:var(--navy); cursor:default; }
+.toggleOff:hover { background:var(--gray400); }
+.toggleThumb {
+  position:absolute; top:3px;
+  width:18px; height:18px; border-radius:50%;
+  background:#fff; transition:left 0.25s;
+  box-shadow:0 1px 4px rgba(0,0,0,0.2);
+  display:block;
+}
+.toggleOff .toggleThumb { left:3px; }
+.toggleOn  .toggleThumb { left:23px; }
+
+.paramErr { display:flex; align-items:center; gap:0.4rem; font-size:0.8rem; color:#7A3030; background:#F9EDED; border:1px solid #E8CCCC; border-radius:8px; padding:0.625rem 0.875rem; }
+.paramErr svg { width:14px; height:14px; flex-shrink:0; }
+
+/* Boutons panel */
+.btnSave {
+  display:flex; align-items:center; justify-content:center; gap:0.45rem;
+  background:var(--navy); color:#fff; border:none;
+  border-radius:9px; padding:0.7rem 1.25rem;
+  font-size:0.875rem; font-weight:600; cursor:pointer; transition:all 0.18s;
+}
+.btnSave svg { width:16px; height:16px; }
+.btnSave:hover:not(:disabled) { background:var(--blue); }
+.btnSave:disabled { opacity:0.6; cursor:not-allowed; }
+
+.btnCancel {
+  display:flex; align-items:center; justify-content:center;
+  background:transparent; color:var(--gray600);
+  border:1.5px solid var(--gray200); border-radius:9px;
+  padding:0.6rem 1.25rem; font-size:0.84rem; font-weight:600;
+  cursor:pointer; transition:all 0.18s;
+}
+.btnCancel:hover { background:var(--gray50); border-color:var(--gray400); color:var(--navy); }
+
+/* ═══════════════════════════════════════════════
+   AJOUTS SPRINT 2 — Classes certif card + stepper
+   Point d'activation bleu clair · Boutons uniformes
+   ═══════════════════════════════════════════════ */
+
+/* ─── Certif Cards (auditeur + expert partagé) ── */
+.certifGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:1rem; }
+.certifCard {
+  background:#fff; border-radius:14px; padding:1.25rem;
+  border:1.5px solid #E8EDF5; cursor:pointer;
+  transition:all 0.2s; box-shadow:0 1px 3px rgba(0,40,85,0.04);
+}
+.certifCard:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,40,85,0.1); border-color:#CBD5E1; }
+.certifCardHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; }
+.certifBadge { padding:0.2rem 0.625rem; border-radius:99px; font-size:0.72rem; font-weight:600; font-family:'DM Sans',sans-serif; }
+
+/* Point activation : bleu clair (plus vert) */
+.activeDot { width:8px; height:8px; background:#60A5FA; border-radius:50%; box-shadow:0 0 0 3px rgba(96,165,250,0.2); }
+.activePill { font-size:0.68rem; background:rgba(96,165,250,0.12); color:#2563EB; padding:2px 7px; border-radius:99px; font-weight:700; font-family:'DM Sans',sans-serif; }
+
+.certifTitle { font-size:0.9rem; font-weight:700; color:#0D1520; margin-bottom:0.35rem; font-family:'DM Sans',sans-serif; }
+.certifDesc  { font-size:0.78rem; color:#8A9BBC; margin-bottom:0.625rem; font-family:'DM Sans',sans-serif; line-height:1.4; }
+.certifMeta  { display:flex; gap:1rem; font-size:0.78rem; color:#6B83A8; margin-bottom:0.5rem; font-family:'DM Sans',sans-serif; align-items:center; }
+.certifMeta svg { width:13px; height:13px; flex-shrink:0; }
+.certifExpiry { display:flex; align-items:center; gap:5px; font-size:0.75rem; color:#8A9BBC; font-family:'DM Sans',sans-serif; margin-bottom:0.875rem; }
+.certifExpiry svg { width:13px; height:13px; }
+.expiryWarn { color:#B45309; font-weight:700; }
+.expiryOk   { color:#2563EB; font-weight:700; }
+
+/* Section */
+.section { margin-bottom:1.75rem; }
+.sectionHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.875rem; }
+.sectionHeader h3 { font-size:1rem; font-weight:700; color:#0D1520; font-family:'DM Sans',sans-serif; margin:0; }
+
+/* ─── Stepper uniforme pour toutes les pages certif ── */
+.stepper {
+  display:flex; align-items:center;
+  background:#fff; border-radius:14px; border:1px solid #E8EDF5;
+  padding:1.25rem 1.75rem; margin-bottom:1.75rem;
+  overflow-x:auto; gap:0;
+  box-shadow:0 1px 4px rgba(0,40,85,0.06);
+}
+.stepper::-webkit-scrollbar { height:3px; }
+.stepper::-webkit-scrollbar-thumb { background:#DAE2EF; border-radius:99px; }
+
+.stepItem  { display:flex; align-items:center; flex:1; min-width:90px; }
+.stepDot {
+  width:30px; height:30px; border-radius:50%;
+  background:#F1F5F9; color:#94A3B8;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.78rem; font-weight:700; flex-shrink:0; z-index:1;
+  transition:all 0.3s; font-family:'DM Sans',sans-serif;
+  border:2px solid #E2E8F0;
+}
+/* Étape active : bleu Leoni (pas vert) */
+.stepActive .stepDot {
+  background:#002855; color:#fff; border-color:#002855;
+  box-shadow:0 0 0 4px rgba(0,40,85,0.15);
+}
+/* Étape faite : bleu clair (cohérent avec la palette) */
+.stepDone .stepDot { background:#60A5FA; color:#fff; border-color:#60A5FA; }
+
+.stepLabel {
+  font-size:0.75rem; color:#94A3B8; white-space:nowrap;
+  margin-left:0.5rem; font-family:'DM Sans',sans-serif; transition:color 0.2s;
+}
+.stepActive .stepLabel { color:#002855; font-weight:700; }
+.stepDone   .stepLabel { color:#2563EB; font-weight:600; }
+
+.stepLine { flex:1; height:2px; background:#E2E8F0; margin:0 0.5rem; transition:background 0.3s; }
+.stepDone .stepLine { background:#60A5FA; }
+
+/* ─── Bouton action primaire uniforme (toutes les pages certif) ── */
+.btnAction {
+  display:inline-flex; align-items:center; gap:0.45rem;
+  background:#002855; color:#fff; border:none;
+  border-radius:9px; padding:0.625rem 1.125rem;
+  font-size:0.84rem; font-weight:600; cursor:pointer;
+  transition:all 0.18s; white-space:nowrap;
+  box-shadow:0 2px 8px rgba(0,40,85,0.18);
+  font-family:'DM Sans',sans-serif;
+}
+.btnAction svg { width:15px; height:15px; }
+.btnAction:hover:not(:disabled) { background:#003F8A; transform:translateY(-1px); box-shadow:0 4px 14px rgba(0,63,138,0.25); }
+.btnAction:disabled { opacity:0.55; cursor:not-allowed; transform:none; }
+
+.btnActionSec {
+  display:inline-flex; align-items:center; gap:0.45rem;
+  background:#fff; color:#002855; border:1.5px solid #DAE2EF;
+  border-radius:9px; padding:0.625rem 1.125rem;
+  font-size:0.84rem; font-weight:600; cursor:pointer;
+  transition:all 0.18s; white-space:nowrap;
+  font-family:'DM Sans',sans-serif;
+}
+.btnActionSec svg { width:15px; height:15px; }
+.btnActionSec:hover { border-color:#002855; color:#002855; background:#EEF4FF; }
+
+/* ─── Alerte/Badge expiration (card header) ── */
+.expiryBadge {
+  font-size:0.68rem; font-weight:700; padding:3px 9px;
+  border-radius:99px; white-space:nowrap;
+}
+.expiryBadgeWarn { background:rgba(180,83,9,0.1); color:#B45309; }
+.expiryBadgeOk   { background:rgba(37,99,235,0.1); color:#2563EB; }
+.expiryBadgeCrit { background:rgba(220,38,38,0.1); color:#DC2626; }
+
+/* ─── Filtres (AuditeurCertifications, ExpertCertifications) ───── */
+.filters { display:flex; gap:5px; flex-wrap:wrap; }
+.filterBtn {
+  padding:.4rem .9rem; border-radius:8px; border:1.5px solid #E8EDF7;
+  background:transparent; color:#6B83A8; font-size:.8rem; font-weight:700;
+  cursor:pointer; transition:all .15s; font-family:'DM Sans',sans-serif;
+}
+.filterBtn:hover { background:#fff; border-color:#DAE2EF; color:#4A5568; }
+.filterActive { background:#002855 !important; color:#fff !important; border-color:#002855 !important; }
+
+/* ─── Bouton secondaire (Rafraîchir, etc.) ─── */
+.btnSecondary {
+  display:inline-flex; align-items:center; gap:0.45rem;
+  background:transparent; border:1.5px solid var(--gray200,#DAE2EF);
+  color:var(--gray600,#4A5568); border-radius:9px;
+  padding:0.5rem 0.875rem; font-size:0.84rem; font-weight:600;
+  cursor:pointer; transition:all 0.18s; white-space:nowrap;
+  font-family:'DM Sans',sans-serif;
+}
+.btnSecondary svg { width:15px; height:15px; }
+.btnSecondary:hover { background:#EEF2F8; }

@@ -1,0 +1,321 @@
+code;description_eng;description_fr
+000;Wrong colour;Mauvaise couleur
+001;Cross-section too small;Section trop petite
+002;Cross-section too large;Section trop grande
+003;Wrong (wire / tube) type;Mauvais composant (file / gaine)
+004;Single strands cut-off missing;Brin cuivre coupé manquant
+005;Insulation not stripped properly;Dénudage ou dégainage non fait correctement
+006;Insulation damaged;Isolation endommagée
+007;Wire damaged;Fil endommagé
+008;Measure too short;Mesure trop courte
+009;Measure too long;Mesure trop longue
+010;Strip length too short;Longueur dénudage trop courte
+011;Strip length too long;Longueur dénudage trop longue
+012;Printing wrong;Marquage faux / non-conforme
+013;Printing missing;Marquage manquant
+014;Printing dimensions wrong;Dimension identification non-conforme (NC)
+015;Printing not clear;Impression non lisible
+016;Insulation tensile force not o.k.;Force d'adhésion de l'isolant NC
+017;Dismantling length too short;Longueur dégainage trop courte
+018;Dismantling length too long;Longueur dégainage trop longue
+019;Strip not free of notches or not correct;Partie dénudée avec entaille ou non conforme
+020;Lay lenght not o.k.;Pas de torsadage non conforme
+021;Roughening not o.k.;Coupe non conforme
+022;Conductor damaged;Cuivre endommagé
+023;Cross section crooked;Coupure oblique
+024;Longitudinal cut not straight;Coupe longitudinale n'est pas droite
+025;Twisted direction false;Sens de torsadage NC
+026;Untwisted length wrong;Longueur non torsadée NC
+027;Wire not stretched after untwisting;Fil ondulé après détorsadage
+028;Wrong number of wires in the bundle;Quantité non-conforme de fils dans le toron
+100;Insulation in copper crimp area;Isolant dans zone de sertissage de cuivre
+101;Foreign object in crimp area;Corps étranger dans le sertissage
+102;Single strands outside;Quelques brins de cuivre non sertis
+103;Insulation crimp not o.k.;Sertissage sur isolant non-conforme
+104;Crimp width not o.k.;Largeur de sertissage non conforme
+105;Crimp height not o.k.;Hauteur de sertissage non conforme
+106;Pull-out force not o.k.;Force de traction non conforme
+107;Cable wrong position;Position du fil dans le contact non conforme
+108;Wrong contact;Erreur de contact
+109;Wrong plating of terminal;Traitement de surface du contact non-conforme
+110;Deformed contact area;Zone de contact déformée
+111;Deformed crimping area;Zone de sertissage déformée
+112;Terminal feeder cut incorrect;Témoin de coupe mal coupé
+113;Terminal lock deformed/missing;Verrouillage déformé / manquant
+114;Bell mouth incorrect missing;Entrée de la cosse non conforme / manquante
+115;Contact is not to specification;Contact non conforme aux spécifications
+116;Crimp burr too large;Bavure sertissage trop grande
+117;Copper crimp open;Sertissage sur cuivre ouvert
+118;Wire only in one blade of IDC;Fil coincé seulement par une lame de l' IDC
+119;Wrong seal;Erreur de joint
+120;Damaged seal;Joint non étanche / endommagé
+121;Position of seal not o.k.;Position du joint non-conforme
+122;Insulation pulls back;L'isolant se retire
+123;Insulation height not o.k.;Hauteur isolant non-conforme
+124;Insulation width not o.k.;Largeur Isolant non-conforme
+125;Twist Fitment;Fil torsadé dans la cavité
+126;Bent Fitment;Fil déformé dans la carte
+127;Seal missing;Joint manquant
+128;Strand too long;Brin débordant / trop long
+129;Contact oxidized;Contact oxydé
+130;Defect part from Cut-module in production flow;Element manquant suite au module de coupe dans le flux de production
+131;Detached strands in crimp area;Brins de fil libre dans la zone de sertissage
+132;Connection bar too long/not completely removed;Présence de témoin de découpe
+133;Wire cut instead of stripped;Coupe nette
+200;Solder on contact area;Etain dans la partie du contact
+201;Cold solder joint;Soudure froide
+202;Solder under insulation  (> 7mm);Etain sous isolant (>7mm)
+203;Terminal/joint not soldered;Cosse assemblage non soudé
+204;Too much solder / badly soldered;Beaucoup d' étain de soudure/Mauvais soudage
+205;Strip end is sticking too far out;Limite de dénudage trop éloignée
+206;Solder on insulation;Etain sur l'isolant
+207;Insulation gap more than 2 mm;Distance d'isolation plus que 2mm
+208;Insulation burned;Isolant brûlé
+209;Too much flux (terminal/joint/cable);trop de flux sur la cosse/ assemblage/ fil
+210;Not all strands in solder areas/joint;Tous les brins du fil ne sont pas dans la soudure
+211;Insolation in the solder area;Isolant dans la soudure
+212;End splice not pressed;Agrafe n´est pas sertie
+213;Wire Strands twisting not o.k.;Torsadage des brins non-conforme
+214;Gap between insulation and casing too long;Mesure entre l'isolant et la cosse trop longue
+216;Strand is 3 mm too long;Brins hors cosse plus que 3 mm
+217;Parts of casing not tinned;Partie de la cosse non étamée
+218;Gap between insulation and fixing more than 1 mm;Distance entre l'isolation et la fixation est plus qu'1 mm
+219;Not every strand is tinned;Les brins ne sont pas tous dans la soudure
+220;Too much tin on battery fixing;Trop d' étain sur la fixation du batterie
+221;Wire hardened by tin;Fil endurci par l'étain
+222;Tin build-ups on soldering;Accumulation d'étain sur le point de soudage
+223;Solder-forming flux residues on soldering point;résidus de flux sur le point de soudage
+224;Solder-forming flux residues in contact area;résidus de flux dans la zone de contact
+225;Solder-forming flux residues on wire;Résidus de flux sur le fil
+226;Wire ends not completely covered with tin;Les extrémités des fils ne sont pas intégrés avec l'étain
+227;Single strands are splitting;Brins débordés, éparpillés
+228;Improper tin spikes;Pointes de soudure non acceptable
+300;Strands missing;Manque brins de fils
+301;Cable selection incorrect;Sélection fil incorrect
+302;Cable position wrong;Fil en mauvaise position
+303;Small cable not in the center;Petit fils ne sont pas au centre
+304;Insulation in welding area;Isolant dans la zone de soudure
+305;Insulation gap more than 5 mm;Distance d'isolation plus que 5mm
+306;Insulation of welding area missing;Isolant de la zone de soudure manquant
+307;Insulation of welding area damaged;Isolation dans la zone de soudure endommagé
+310;Ragged wire;Fil déchiré
+311;Isulation is not watertight;Isolation non étanche
+312;Welding characteristic is missing on the backside;Caractéristique de soudage manquante à l'arrière
+315;Strands splitting;Brins de fil divisés, éparpillés
+316;Welding point feather-edged;Point de soudure trop aigü / pas arrondi
+317;Wrong welding geometry;Géométrie de la soudure non-conforme
+318;Strands are too long;Brins du fil trop long
+321;Wrong positioning of welding point;Point de soudage mal positionné
+322;Wrong dimensioning of welding point;Point de soudage mal dimensionné
+323;Peel force not o.k.;Force de pelage non-conforme
+324;Tensile strength of welding not o.k.;Force de tension de soudage non-conforme
+325;Surface crack;Cracks superficiels
+326;Welding area burned;Zone de soudure brûlée
+400;Mould material in contact area;Matière d'injection dans la zone de contact
+401;Mould part deformed;Pièce injectée déformée
+402;Contact/terminal deformed;Contact/cosse déformé
+403;Hairline cracks on surface;Bavures / Fissures sur la surface
+404;Foreign objects on the moulded part;Corps étranger dans l'injection
+405;Moulded part dirty;pièces moulées sales
+406;Cable not in center of moulded part;Fils/gaine n'est pas au milieu de l'injection
+407;Bubbles on the moulded part;Bulles d' air sur l'injection
+408;Not completety moulded;Manque matière / Non moulé complétement
+409;Cable/coat visible on the moulded part;Fil/gaine visible sur l'injection
+410;Cable/coat damaged/folded directly at moulded part;Fil/gaine derrière l'injection endommagée/plié
+411;Contact broken in the moulded part;Contact cassé dans l'injection
+412;Position of contact in the moulded part wrong;Mauvaise position du contact dans l' injection
+413;Excess material on the part;Excés matière sur la pièce
+414;Mould joint not o.k.;Ligne de soudure non-conforme
+415;Inscriptions not clear;Inscription illisible
+416;Wrong material (granules);Mauvaise matière (granulés)
+417;Mold burr too big;Bavure d' injection trop grande
+418;Damaged molding grommet;Faute d'injection sur le passe-câble
+420;Residues on surface;Déchets sur la surface
+421;Injection point too high;Point d'injection trop long, mal arasé
+422;molded part leaky;Piece surmoulé ne pas etancheite
+500;Cable too hard;Fil trop dur
+501;Foam (excessive material);Mousse (excès de matière)
+502;Incompletely foamed;Mousse incomplète
+503;Foamed part not proper cleaned;Pièce moulée non propre
+504;Wrong branch position;Sortie mauvaise position
+505;Foam too soft;Mousse trop molle
+506;Foam too hard;Mousse trop dure
+507;Parts missing/not properly foamed;Pièce manquante/non correctement moulée
+508;Wire visible;Fils visibles
+509;Air bubbles on surface;bulles d'air sur la surface
+510;Foam inside the housing;Mousse dans le connecteur / Migration de matière
+511;Pinched wire;Fil pincé
+512;Density, hardness not o.k.;Dureté, densité non-conforme
+513;Polymerisation not o.k.;Polymérisation non-conforme
+514;Foam inside the housing;Mousse dans le connecteur (douille)
+600;Terminals width wrong;Contact élargi
+601;Loose fit;Contact mal fixé ( non encliqueté)
+602;Wrong part;Erreur de composant
+603;Missing part;Elément manquant
+604;Incorrect position of parts;Mauvaise position de l'élément
+605;Taping failures;enrubannage ( bandage) non-conforme
+607;Damaged part;Elément endommagé
+608;Incorrectly glued;Mauvais collage
+609;Label missing;Manque identification
+610;Label wrong;Mauvaise identification
+611;Barcode not legible;Code à barres illisible
+612;Corrugated tube incorrectly cut/split;Gaine mal coupé/fissuré
+613;Parts not water tight;Elément non étanche
+614;Parts corroded;Élément oxydé (rouillé)
+615;Incorrect shrinking;Retrécissage non-conforme
+616;Parts dirty;Element sale
+617;Incorrect assembled;Assemblage non-conforme
+618;Incorrect torque setting;Mauvais règlage couple
+619;Missing marking;Marquage manquant
+620;Marking incorrectly/Positioning Marking;Marquage non-conforme/ position
+621;Positioning of branch incorrectly;Sortie de la branche non-conforme
+622;Branch too short;Branche trop courte
+623;Branch too big;Branche trop longue
+624;Position of grommet not o.k.;Position passe fils non-conforme
+625;Cross-section not o.k.;Section non-conforme
+626;Number of threads not o.k.;Nombre de filets non-conforme
+627;Fixture not o.k.;Fixation non-conforme
+628;Thread not o.k.;Filetage non-conforme
+633;Uneven dispersion of adhesive;Application inégale de colle
+634;Adhesive on contact;Présence de colle sur les contacts
+635;Wrong setting parameter;Mauvais paramètres de règlage
+639;Faulty stamping;Perçage / Estampillage non-conforme
+644;Other purchased part damaged;Autre composant d'achat endommagé
+649;Other purchased part is missing;Autre composant d'achat manquant
+656;Fuse deformed;Fusible déformé
+657;Fuse in wrong position;Fusible en mauvaise position
+658;Case not locked;Connecteur (douille) non verrouillé
+659;Sleeve buckled;Manchon flambé / déformé
+660;Other purchased part defective;Autre composant acheté non-conforme
+661;Pin in false position;Position PIN non conformre
+662;Pin deformed;PIN déformé
+663;Overlap dimensions not o.k.;Dimension de recouvrement non-conforme
+664;Diameter failure;Erreur Diamètre
+665;Tight fit failure;Erreur de serrage
+666;Braiding is loose;Pas de la tresse trop large / mal tenue
+667;Loop under the braiding;Nœud dans la tresse
+700;Broken cable;Fil coupé / cassé
+701;Cable switched;Fil inversé
+702;Contact missing;Contact manquant
+703;Contact not locked;Contact non encliqueté
+704;Short circuit;Court circuit
+705;Cable missing;Fil manquant
+706;Extra cable;Fil en plus
+707;Diode polarity wrong;Diode inversé
+708;Not tested;Non contrôlé
+709;Air pipe failure;Tube à air endommagé
+710;Attenuation too big;Amortissement trop important
+711;Resistance not o.k.;Résistance non-conforme
+712;Test identification not o.k.;Identification de test non-conforme
+713;No function;Pas de fonction
+714;High-voltage failure;Test haute tension non-conforme (Isolation)
+715;Relay Missing;Manque relais
+716;Wrong fuse;Erreur de fusible
+717;Wrong relay;Erreur de relais
+718;Fuse not locked;Fusible mal verrouillé
+719;Relay not locked;Relais mal verrouillé
+800;Wrong identification;Erreur d'identification
+801;Wrong container;Erreur de contenant / défaut d'aspect
+802;Wrong quantity;Erreur de quantité
+803;Parts mixed;Eléments mélangés
+804;Packaging damaged;Conditionnement endommagé
+805;Documents missing/false;Document manquant/faux
+806;Not packed to specification;Spécifications de conditionnement non respectées
+807;Not on time delivery;Retard Livraison
+808;FIFO not adhered;FIFO non respecté
+809;Pack-labeling not completed;Etiquette incomplète
+810;Wrong labeling;Mauvais étiquetage
+811;Country of origin missing;Pays d'origine manquant
+812;Wrong delivery;Mauvaise livraison
+813;Parts without EMPB/ISIR/PPAP;Elements sans EMPB/ISIR/PPAP
+900;Packaging wrong;Mauvais Conditionnement
+901;Over supplied;Livraison en exédant
+902;Under supplied;Livraison incomplète
+903;Technical failure;Défaut technique
+904;Too late supplied;Livraison en retard
+905;Too early supplied;Livraison en avance
+906;Wrong revision state;Erreur d'indice de révision
+907;Parts damaged;Eléments endommagés
+908;Wrong packing amount;Erreur de quantités emballées
+909;Error on part number between Purchase order and delivery note;Erreur de référence entre la commande et le bon de livraison
+910;Error on part number between delivery note and label.;Erreur de référence entre le bon de livraison et l'étiquette.
+911;Missing part number;Manque référence.
+912;Issue level received incorrect;Indice non-conforme.
+913;Error of identification between label and content;Erreur d'identification entre l'étiquette et le contenu.
+914;Mix of part numbers;Mélange de références.
+1000;Wire tangled;fil emmêlé
+1001;Wire damaged;Fil endommagé
+1002;Copper visible;Cuivre apparent
+1003;Copper not centered;Cuivre non centré
+1004;Plastic isolation inflated , granular on plastic;Isolant boursouflé, granuleux sur plastique
+1005;Length incorrect;Longueur non-conforme
+1006;Missing marking, ilegible or wrong, color defect;Marquage absent, illisible ou erroné, défaut couleur.
+1007;Copper oxydated;Cuivre oxydé.
+1008;Difficult unreeling;Débobinage difficile
+1009;Isolation damaged after overmoulding;Isolant détérioré après surmoulage
+1100;Default of aspect : surface, tinplating;Défaut d'aspect : surface, étamage.
+1101;Default of aspect : crack , scratch;Défaut d'aspect : fissures, rayures
+1102;Locking side not conform;Ergot de verrouillage non-conforme.
+1103;Bent connexion;Connexion déformée.
+1104;Reel bent;Rouleau / bobine déformée.
+1105;Dimension out of tolerance;Cote hors tolérance.
+1106;Unreeling direction incorrect;Inversion sens d'enroulement.
+1107;Difficult unreeling;Difficulté de déroulement.
+1108;Problem on flask;Problème de flasque.
+1109;Connexion breaking during crimping;Connexion cassante lors du sertissage.
+1200;Colour not conform;Couleur non-conforme.
+1201;Broken component;Composant cassé.
+1202;Distorted components , dimension out of tolerance;Composant déformé, cote hors tolérance.
+1203;Missing raw material, hole;Manque matière première, trous.
+1204;Flash , excess of material;Excès matière, bavures.
+1205;Missing element , bad assembly , not adequate;Elément absent, mauvais assemblage, inadéquat.
+1206;Breaking of part while assembling;Casse durant l'assemblage
+1207;Difficult or impossible insertion of clip;Insertion clip ou languette difficile ou impossible.
+1208;Locking default;Défaut de verrouillage.
+1209;Closure of covers or mating part difficult or impossible;Fermeture (couvercle, contreparties) difficile ou impossible.
+1210;Electrical control or bad / impossible waterproofing;Contrôle électrique ou étanchéité difficile ou impossible.
+1211;Bad positioning or bad retention of components with mating parts;Mauvaise position ou rétention des éléments en contact
+1300;Missing raw material;Manque matière première
+1301;Aspect, burnings, flashes, distortion;Aspect, brûlures, bavures, déformations
+1302;Dimension out of tolerance;Cote hors tolérance.
+1303;Missing sub-elements (nut , tie-wrap ...);Manque sous-élément (lanière, écrou...).
+1304;Broken , cut or torn protection;Protection composant cassé, coupé ou déchiré.
+1305;Wrong cutting of tube;Coupe composant non-conforme.
+1306;Breaking of protection during use;Casse de la protection durant l'utilisation
+1307;Difficult or impossible use of components;Usage du composant difficile ou impossible
+1308;Adhesivity not conform;Adhésivité non-conforme.
+1400;Raw material Certificate not correct (copper);Certificat matière première non-conforme (cuivre)
+1401;Oxydated copper;Cuivre oxydé.
+1402;Slacking wire strands (copper);Brins de cuivre détendus
+1403;Inversion of reels on palett (copper);Bobines inversées sur palette (cuivre)
+1404;Certificate of conformity not correct  (compound for colouring);Certificat de conformité non-conforme
+1405;Wrong colour  (compound for colouring);Mauvaise couleur
+1406;Granulometry not correct (compound for colouring);Granulométrie non-conforme.
+1500;All various defects;Autres défauts divers.
+1501;Function of electronic component not operating;Fonction de composant électronique non assurée.
+1600;Wrong dimension;Dimension non-conforme.
+1601;Bad printing on packaging;Impression sur conditionnement non-conforme.
+1602;Folding, sticking, soldering, stapling not conform;Pliage, collage, soudure, agrafage non-conforme.
+1603;Damaged packaging;Conditionnement détérioré.
+1700;Error of label;Erreur d'identification.
+1701;Mixed parts;Mélange de références.
+1702;Tangled wires or harnesses;Fils / faisceaux emmêlés.
+1703;Missing plastic material /housing;Manque composant sur faisceau.
+1704;Wrong orientation;Mauvaise orientation / Géométrie du faisceau non-conforme.
+1705;Connection out of housing;Absence verrouillage du contact dans son boîtier.
+1706;Damaged isolation on wire;Isolant endommagé sur le fil.
+1707;Error of position;Erreur de position
+1708;Loop on the cable;Noeud sur le câble.
+1709;Damaged seal;Joint détérioré.
+1710;Damaged terminal;Connexions déformées.
+1711;Missing seal;Joint manquant.
+1712;Missing stripping;Dénudage absent.
+1713;Missing taping;Enrubannage manquant.
+1714;Missing tube on harness;Gaine manquante sur faisceau.
+1715;Problem of connection;Problème de connexion / Continuité faisceau non assurée.
+1716;Seal out of position;Position joint non-conforme.
+1717;Secondary lock of housing damaged;Verrouillage secondaire sur boîtier non-conforme.
+1718;Terminal out of wire;Fil arraché de la connexion.
+1719;Wire inserted in wrong connector cavity;Fil inseré dans une mauvaise cavité du connecteur / Inversion fils
+1720;Wrong crimping;Mauvais Sertissage
+1721;Incorrect length of branches;Longueur branche non-conforme.

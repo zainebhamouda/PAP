@@ -1,0 +1,554 @@
+/* Auth.module.css — Login & Register */
+
+.authPage {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Panneau gauche ── */
+.leftPanel {
+  width: 42%;
+  min-width: 360px;
+  background: #071628; /* fallback si l'image ne charge pas, identique au hero */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 3rem;
+  flex-shrink: 0;
+}
+
+/* Même image de fond (câblage) que le hero de la landing page */
+.leftPanelImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 40%;
+  filter: brightness(0.72) saturate(0.85);
+  display: block;
+  z-index: 0;
+}
+
+/* Overlay sombre en dégradé, intensité réduite */
+.leftPanelOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    rgba(4,13,26,0.55) 0%,
+    rgba(4,13,26,0.42) 30%,
+    rgba(4,13,26,0.28) 55%,
+    rgba(4,13,26,0.18) 80%,
+    rgba(4,13,26,0.12) 100%
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+.leftContent { position: relative; z-index: 2; }
+
+.leftDecor {
+  display: none;
+}
+
+/* Patterns géométriques décoratifs */
+.leftPanel::before {
+  content: '';
+  position: absolute;
+  width: 320px; height: 320px;
+  border: 1px solid rgba(126,174,223,0.18);
+  border-radius: 50%;
+  bottom: -80px; right: -80px;
+  z-index: 1;
+}
+.leftPanel::after {
+  content: '';
+  position: absolute;
+  width: 180px; height: 180px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  top: 40px; right: 40px;
+  z-index: 1;
+}
+
+/* Logo Leoni */
+.brandLogo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  margin-bottom: 1.25rem;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.logoL {
+  font-family: var(--font-display);
+  font-size: 4.8rem;
+  font-weight: 800;
+  color: var(--leoni-blue-light);
+  line-height: 0.95;
+  letter-spacing: -3px;
+}
+.logoEONI {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.95);
+  letter-spacing: 4px;
+}
+
+/* New larger LEONI wordmark + platform title */
+.platformTitle {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.95);
+  margin-top: 6px;
+  letter-spacing: 0.06em;
+}
+.brandDesc {
+  color: rgba(255,255,255,0.85);
+  font-size: 0.98rem;
+  margin-top: 8px;
+  max-width: 420px;
+  line-height: 1.35;
+}
+
+/* Bouton Accueil */
+.homeBtn {
+  position: fixed;
+  bottom: 2rem;
+  left: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  color: rgba(255,255,255,0.8);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  z-index: 3;
+}
+
+.homeBtn:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.6);
+  color: rgba(255,255,255,1);
+  transform: translateY(-2px);
+}
+
+.homeBtn svg {
+  font-size: 1rem;
+}
+
+.leftTitle {
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.15;
+  margin: 0 0 0.6rem 0;
+}
+
+.goldText { color: var(--leoni-blue-light); }
+
+.leftSub {
+  color: rgba(255,255,255,0.85);
+  font-size: 0.98rem;
+  line-height: 1.45;
+  margin-bottom: 1.5rem;
+  max-width: 340px;
+}
+
+/* Features list */
+.features { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(255,255,255,0.8);
+  font-size: 0.9rem;
+  animation: slideInLeft 0.5s ease forwards;
+  opacity: 0;
+}
+
+.featureDot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--leoni-blue-light);
+  flex-shrink: 0;
+}
+
+/* Steps Indicator (Register) */
+.stepsIndicator {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+.stepDot {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(255,255,255,0.45);
+  font-size: 0.875rem;
+  transition: all 0.3s;
+}
+.stepCircle {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+.stepActive { color: var(--white); }
+.stepActive .stepCircle {
+  background: #D8E9FA;
+  border-color: #D8E9FA;
+  color: var(--leoni-navy);
+}
+.stepDone { color: rgba(255,255,255,0.6); }
+.stepDone .stepCircle {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.72);
+}
+
+/* ── Panneau droit ── */
+.rightPanel {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2.5rem 2rem;
+  background: #ebedf0;
+  position: relative;
+  overflow-y: auto;
+  height: 100vh;
+}
+
+.rightPanel::before {
+  content: '';
+  position: absolute;
+  width: 320px; height: 320px;
+  border: 1px solid rgba(126,174,223,0.18);
+  border-radius: 50%;
+  bottom: -80px; left: -80px;
+  z-index: 1;
+}
+
+.rightPanel::after {
+  content: '';
+  position: absolute;
+  width: 180px; height: 180px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  top: 40px; left: 40px;
+  z-index: 1;
+}
+
+.rightPanel::before {
+  display: none;
+}
+
+.formCard {
+  width: 100%;
+  max-width: 560px;
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem;
+  box-shadow: var(--shadow-lg);
+  animation: fadeIn 0.5s ease;
+  margin: auto 0;
+}
+.formHeader {
+  margin-bottom: 1.75rem;
+}
+.stepBadge {
+  display: inline-block;
+  background: rgba(126,174,223,0.12);
+  color: var(--leoni-blue-light);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.05em;
+}
+.formHeader h2 {
+  font-size: 1.75rem;
+  color: var(--leoni-navy);
+  margin-bottom: 0.25rem;
+}
+.formHeader p {
+  color: var(--gray-500);
+  font-size: 0.9rem;
+}
+
+/* Alerts */
+.alertError, .alertSuccess {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  margin-bottom: 1.25rem;
+}
+.alertError   { background: var(--danger-bg);  color: var(--danger);  border: 1px solid #f5c6c2; }
+.alertSuccess { background: var(--success-bg); color: var(--success); border: 1px solid #b8e2cb; }
+
+/* Form */
+.form { display: flex; flex-direction: column; gap: 1.1rem; }
+
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+.field { display: flex; flex-direction: column; gap: 0.4rem; }
+.field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.field input, .select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  color: var(--gray-700);
+  background: var(--white);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field input:focus, .select:focus {
+  border-color: var(--leoni-blue-light);
+  box-shadow: 0 0 0 3px rgba(0,87,184,0.1);
+}
+
+/* Input avec icône */
+.inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.inputWrap input {
+  padding-left: 2.75rem;
+  padding-right: 2.75rem;
+}
+.inputIcon {
+  position: absolute;
+  left: 0.9rem;
+  font-size: 1rem;
+  pointer-events: none;
+}
+.eyeBtn {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  color: var(--gray-400);
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* Role Grid */
+.roleGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+.roleCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.9rem 0.5rem;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.roleCard:hover { border-color: var(--leoni-blue-light); background: var(--info-bg); }
+.roleCardActive {
+  border-color: var(--leoni-blue);
+  background: var(--info-bg);
+  box-shadow: 0 0 0 3px rgba(0,87,184,0.15);
+}
+.roleIcon  { font-size: 1.5rem; }
+.roleLabel { font-size: 0.78rem; font-weight: 600; color: var(--gray-600); line-height: 1.3; }
+
+/* Checkbox */
+.checkField { margin: 0.25rem 0; }
+.checkLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+.checkLabel input[type="checkbox"] {
+  width: 16px; height: 16px;
+  margin-top: 2px;
+  accent-color: var(--leoni-blue);
+  flex-shrink: 0;
+}
+
+/* Buttons */
+.btnPrimary {
+  width: 100%;
+  padding: 0.875rem;
+  background: linear-gradient(135deg, var(--leoni-blue) 0%, var(--leoni-blue-mid) 100%);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.btnPrimary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+.btnPrimary:disabled { opacity: 0.65; cursor: not-allowed; }
+
+.btnOutline {
+  width: 100%;
+  padding: 0.875rem;
+  background: transparent;
+  color: var(--leoni-blue);
+  border: 1.5px solid var(--leoni-blue);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.btnOutline:hover { background: var(--info-bg); }
+
+.btnRow {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 0.75rem;
+}
+.btnRow .btnOutline { width: 100%; }
+.btnRow .btnPrimary { width: 100%; }
+
+.divider {
+  text-align: center;
+  position: relative;
+  margin: 1.25rem 0 1rem;
+  color: var(--gray-400);
+  font-size: 0.8rem;
+}
+.divider::before, .divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: calc(50% - 80px);
+  height: 1px;
+  background: var(--gray-200);
+}
+.divider::before { left: 0; }
+.divider::after  { right: 0; }
+.divider span { background: var(--white); padding: 0 0.5rem; }
+
+.spinner {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: var(--white);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.formFooter {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--gray-400);
+  margin-top: 1.5rem;
+}
+
+.linkBtn {
+  background: none;
+  border: none;
+  color: var(--leoni-blue);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .authPage  { flex-direction: column; }
+  .leftPanel { width: 100%; min-height: 200px; padding: 2rem; }
+  .leftTitle { font-size: 1.8rem; }
+  .features, .stepsIndicator { display: none; }
+  .rightPanel { padding: 1.5rem; }
+  .formCard { padding: 1.75rem; }
+  .row2     { grid-template-columns: 1fr; }
+  .roleGrid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── À ajouter à la fin de Auth.module.css ── */
+
+/* Ligne label + lien oublié côte à côte */
+.fieldLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+/* Lien "Mot de passe oublié ?" */
+.forgotLink {
+  background: none;
+  border: none;
+  color: var(--gray-500);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  font-family: inherit;
+  transition: color 0.15s;
+  margin-top: 20px;
+}
+.forgotLink:hover {
+  color: var(--gray-700);
+  text-decoration: underline;
+}
+
+/* RTL adjustments */
+.authPage[dir="rtl"] .homeBtn {
+  left: auto;
+  right: 1.5rem;
+}
+
+.authPage[dir="rtl"] .homeBtn svg {
+  transform: scaleX(-1);
+}

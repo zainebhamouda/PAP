@@ -1,0 +1,1052 @@
+[data-theme="dark"] .notif-row:hover .notif-nom.sys {
+  color: #444957 !important;
+}
+[data-theme="dark"] .notif-row:hover .notif-nom {
+  color: #7c8596 !important;
+}
+[data-theme="dark"] .notif-row.selected .notif-nom.sys,
+[data-theme="dark"] .notif-row:active .notif-nom.sys {
+  color: #79889c !important;
+}
+[data-theme="dark"] .notif-row.selected .notif-nom,
+[data-theme="dark"] .notif-row:active .notif-nom,
+[data-theme="dark"] .notif-row:hover .notif-nom {
+  color: #888383 !important;
+  font-weight: 700;
+}
+[data-theme="dark"] .notif-row.selected,
+[data-theme="dark"] .notif-row:active {
+  background: #232b3b !important;
+  color: #8e8d8d !important;
+}
+[data-theme="dark"] .notif-row.selected .notif-nom,
+[data-theme="dark"] .notif-row:active .notif-nom {
+  color: #7b7b7b !important;
+  font-weight: 700;
+}
+[data-theme="dark"] .notif-nom,
+[data-theme="dark"] .hrow-nom,
+[data-theme="dark"] .notif-row.selected .notif-nom,
+[data-theme="dark"] .notif-row:active .notif-nom {
+  color: #838383 !important;
+  font-weight: 700;
+}
+[data-theme="dark"] .profile-menu,
+[data-theme="dark"] .profil-menu,
+[data-theme="dark"] .dropdown-menu {
+  background: #161b27 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .hrow:hover,
+[data-theme="dark"] .notif-row:hover {
+  background: #232b3b !important;
+  color: #fff !important;
+}
+/* Mode sombre : hover gris foncé et texte blanc sur boutons ghost et lignes de tableau */
+[data-theme="dark"] .btn-ghost:hover,
+[data-theme="dark"] tr:hover,
+[data-theme="dark"] .ex-defaut:hover {
+  background: #232b3b !important;
+  color: #fff !important;
+}
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
+
+/* ═══════════════════════════════════════════════════
+   LEONI PAP — Design System v5
+   Dark mode UNIVERSEL — approche CSS variables
+   ═══════════════════════════════════════════════════ */
+
+/* ──────────────────────────────────────────────────
+   VARIABLES LIGHT
+────────────────────────────────────────────────── */
+:root {
+  --leoni-navy:        #002855;
+  --leoni-blue:        #003F8A;
+  --leoni-blue-mid:    #0057B8;
+  --leoni-blue-light:  #1A73C8;
+  --leoni-gold:        #C8982A;
+  --leoni-gold-light:  #E8B84B;
+  --leoni-gold-pale:   #FFF4D6;
+  --white:        #FFFFFF;
+  --gray-50:      #e3e9f3;
+  --gray-100:     #EEF2F8;
+  --gray-200:     #DAE2EF;
+  --gray-300:     #BCC8DC;
+  --gray-400:     #8A9BBC;
+  --gray-500:     #5C6F8A;
+  --gray-600:     #3D4F66;
+  --gray-700:     #273347;
+  --gray-800:     #182030;
+  --gray-900:     #0D1520;
+  --success:  #1A7A4A; --success-bg: #E6F5EE;
+  --warning:  #C8982A; --warning-bg: #FFF4D6;
+  --danger:   #C0392B; --danger-bg:  #FDECEA;
+  --info:     #0057B8; --info-bg:    #E8F0FB;
+  --radius-sm:6px; --radius-md:12px; --radius-lg:18px;
+  --radius-xl:24px; --radius-full:999px;
+  --shadow-sm: 0 1px 4px rgba(0,40,85,.08);
+  --shadow-md: 0 4px 16px rgba(0,40,85,.12);
+  --shadow-lg: 0 8px 32px rgba(0,40,85,.16);
+  --shadow-xl: 0 16px 48px rgba(0,40,85,.20);
+  --shadow-gold: 0 4px 20px rgba(200,152,42,.30);
+  --font-display: 'Rajdhani', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+
+  /* ── THEME TOKENS — utilisés par le JS aussi ── */
+  --dm-bg:          #F4F6FA;
+  --dm-card:        #FFFFFF;
+  --dm-card2:       #F8FAFC;
+  --dm-border:      #E2E8F0;
+  --dm-border2:     #E8EDF7;
+  --dm-text:        #0B1E3D;
+  --dm-text2:       #374151;
+  --dm-text3:       #64748B;
+  --dm-text4:       #94A3B8;
+  --dm-input:       #FFFFFF;
+  --dm-input-b:     #E2E8F0;
+  --dm-input-t:     #0B1E3D;
+  --dm-section-hd:  #CBD5E1;
+  --dm-row-even:    #FFFFFF;
+  --dm-row-odd:     #FAFBFC;
+  --dm-row-hover:   rgba(0,0,0,.03);
+  --dm-badge:       #F1F5F9;
+  --dm-divider:     #EEF2F8;
+  --dm-topbar:      #FFFFFF;
+  --dm-topbar-b:    #F1F4FB;
+  --dm-modal:       #FFFFFF;
+  --dm-shadow:      0 2px 10px rgba(0,0,0,.06);
+  --dm-shadow2:     0 8px 32px rgba(0,0,0,.12);
+  --transition-speed: 0.18s;
+
+  /* page-bg etc for compat */
+  --page-bg:    var(--dm-bg);
+  --card-bg:    var(--dm-card);
+  --card-border:var(--dm-border);
+  --text-main:  var(--dm-text);
+  --text-sub:   var(--dm-text2);
+  --text-muted: var(--dm-text3);
+  --text-faint: var(--dm-text4);
+  --input-bg:   var(--dm-input);
+  --input-border:var(--dm-input-b);
+  --input-text: var(--dm-input-t);
+  --sidebar-bg:   #0B2347;
+  --sidebar-text: rgba(255,255,255,.7);
+  --sidebar-hover:rgba(255,255,255,.08);
+}
+
+/* ──────────────────────────────────────────────────
+   VARIABLES DARK
+────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --dm-bg:          #0D1117;
+  --dm-card:        #161B27;
+  --dm-card2:       #1A2030;
+  --dm-border:      rgba(255,255,255,.09);
+  --dm-border2:     rgba(255,255,255,.07);
+  --dm-text:        #E2E8F0;
+  --dm-text2:       #94A3B8;
+  --dm-text3:       #64748B;
+  --dm-text4:       #475569;
+  --dm-input:       #131929;
+  --dm-input-b:     rgba(255,255,255,.12);
+  --dm-input-t:     #E2E8F0;
+  --dm-section-hd:  rgba(255,255,255,.05);
+  --dm-row-even:    #161B27;
+  --dm-row-odd:     #1A2030;
+  --dm-row-hover:   rgba(255,255,255,.04);
+  --dm-badge:       rgba(255,255,255,.07);
+  --dm-divider:     rgba(255,255,255,.06);
+  --dm-topbar:      #10151F;
+  --dm-topbar-b:    rgba(255,255,255,.07);
+  --dm-modal:       #161B27;
+  --dm-shadow:      0 2px 12px rgba(0,0,0,.5);
+  --dm-shadow2:     0 8px 40px rgba(0,0,0,.7);
+
+  /* compat */
+  --page-bg:    var(--dm-bg);
+  --card-bg:    var(--dm-card);
+  --card-border:var(--dm-border);
+  --card-bg2:   var(--dm-card2);
+  --card-border2:var(--dm-border2);
+  --text-main:  var(--dm-text);
+  --text-sub:   var(--dm-text2);
+  --text-muted: var(--dm-text3);
+  --text-faint: var(--dm-text4);
+  --input-bg:   var(--dm-input);
+  --input-border:var(--dm-input-b);
+  --input-text: var(--dm-input-t);
+  --row-hover:  var(--dm-row-hover);
+  --section-hd-bg: var(--dm-section-hd);
+  --badge-bg:   var(--dm-badge);
+  --sidebar-bg:   #020B15;
+  --sidebar-text: rgba(255,255,255,.65);
+  --sidebar-hover:rgba(255,255,255,.06);
+  --success-bg: rgba(5,150,105,.12);
+  --warning-bg: rgba(200,152,42,.12);
+  --danger-bg:  rgba(185,28,28,.12);
+  --info-bg:    rgba(0,87,184,.12);
+  --leoni-gold-pale: rgba(200,152,42,.10);
+  --shadow-card:   0 2px 12px rgba(0,0,0,.5);
+  --shadow-strong: 0 8px 40px rgba(0,0,0,.7);
+}
+
+/* ──────────────────────────────────────────────────
+   RESET & BASE
+────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth}
+body{
+  font-family:var(--font-body);
+  background:var(--dm-bg);
+  color:var(--dm-text);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  transition:background var(--transition-speed),color var(--transition-speed);
+}
+h1,h2,h3,h4,h5{font-family:var(--font-display);font-weight:700;letter-spacing:.02em;color:var(--dm-text)}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:var(--font-body)}
+input,select,textarea{font-family:var(--font-body);outline:none}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--dm-bg)}
+::-webkit-scrollbar-thumb{background:var(--dm-border);border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:var(--leoni-blue-light)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideInLeft{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes pulse-gold{0%,100%{box-shadow:0 0 0 0 rgba(200,152,42,.4)}50%{box-shadow:0 0 0 8px rgba(200,152,42,0)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.animate-fade{animation:fadeIn .5s ease forwards}
+.animate-slide{animation:slideInLeft .4s ease forwards}
+[dir="rtl"]{text-align:right}
+[dir="rtl"] .rtl-flip{transform:scaleX(-1)}
+[data-compact="true"]{--spacing-section:.75rem;--spacing-card:.875rem}
+
+/* ════════════════════════════════════════════════════
+   DARK MODE — APPROCHE UNIVERSELLE
+   On force TOUS les éléments via des sélecteurs larges
+   et on corrige les exceptions ensuite
+   ════════════════════════════════════════════════════ */
+
+/* 1. Body & root */
+[data-theme="dark"] body,
+[data-theme="dark"] #root {
+  background: var(--dm-bg) !important;
+  color: var(--dm-text) !important;
+}
+
+/* 2. TOUS les divs, sections, articles → fond sombre par défaut
+      SAUF ceux qui ont des fonds colorés intentionnels (bleu navy, gradients...) */
+[data-theme="dark"] div,
+[data-theme="dark"] section,
+[data-theme="dark"] article,
+[data-theme="dark"] main,
+[data-theme="dark"] aside,
+[data-theme="dark"] nav,
+[data-theme="dark"] header,
+[data-theme="dark"] footer {
+  color: var(--dm-text);
+}
+
+/* 3. Éléments texte */
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] label,
+[data-theme="dark"] li,
+[data-theme="dark"] td,
+[data-theme="dark"] th {
+  color: inherit;
+}
+
+/* 4. INPUTS — universellement sombres */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: var(--dm-input) !important;
+  color: var(--dm-input-t) !important;
+  border-color: var(--dm-input-b) !important;
+}
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder { color: var(--dm-text4) !important; }
+[data-theme="dark"] select option { background: var(--dm-card); color: var(--dm-text); }
+
+/* 5. TABLES */
+[data-theme="dark"] table { background: var(--dm-card); color: var(--dm-text); }
+[data-theme="dark"] thead,
+[data-theme="dark"] th { background: var(--dm-section-hd) !important; color: var(--dm-text2) !important; border-color: var(--dm-border) !important; }
+[data-theme="dark"] td  { color: var(--dm-text) !important; border-color: var(--dm-border) !important; }
+[data-theme="dark"] tr:hover { background: var(--dm-row-hover) !important; }
+[data-theme="dark"] hr  { border-color: var(--dm-border) !important; }
+
+/* 6. HEADER/TOPBAR */
+[data-theme="dark"] header { background: var(--dm-topbar) !important; border-color: var(--dm-topbar-b) !important; }
+
+/* 7. SIDEBAR */
+[data-theme="dark"] aside { background: var(--sidebar-bg) !important; }
+[data-theme="dark"] [class*="sidebar"],
+[data-theme="dark"] [class*="Sidebar"] { background: var(--sidebar-bg) !important; }
+
+/* 8. SCROLLBAR */
+[data-theme="dark"] ::-webkit-scrollbar-track { background: var(--dm-bg); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); }
+
+/* ════════════════════════════════════════════════════
+   LE VRAI FIX : FILTRER LES BACKGROUNDS INLINE
+   React sérialise style={{ background:'#fff' }} 
+   en style="background: rgb(255, 255, 255)" dans le DOM.
+   On doit donc cibler les éléments ET leur faire hériter
+   des couleurs correctes.
+
+   SOLUTION : on injecte background/color via JS dans applyPreferences
+   ET on surcharge via CSS avec des sélecteurs de classe.
+   ════════════════════════════════════════════════════ */
+
+/* 9. CLASSE .dark-card injectée par JS */
+[data-theme="dark"] .dm-card {
+  background: var(--dm-card) !important;
+  color: var(--dm-text) !important;
+  border-color: var(--dm-border) !important;
+}
+[data-theme="dark"] .dm-card2 {
+  background: var(--dm-card2) !important;
+  color: var(--dm-text) !important;
+}
+[data-theme="dark"] .dm-bg {
+  background: var(--dm-bg) !important;
+  color: var(--dm-text) !important;
+}
+
+/* 10. MODULE CSS classes — les pages qui utilisent des CSS Modules */
+[data-theme="dark"] [class*="page"],
+[data-theme="dark"] [class*="Page"],
+[data-theme="dark"] [class*="wrapper"],
+[data-theme="dark"] [class*="Wrapper"],
+[data-theme="dark"] [class*="container"],
+[data-theme="dark"] [class*="Container"],
+[data-theme="dark"] [class*="content"],
+[data-theme="dark"] [class*="Content"],
+[data-theme="dark"] [class*="layout"],
+[data-theme="dark"] [class*="Layout"] {
+  background: var(--dm-bg);
+  color: var(--dm-text);
+}
+
+[data-theme="dark"] [class*="card"],
+[data-theme="dark"] [class*="Card"],
+[data-theme="dark"] [class*="panel"],
+[data-theme="dark"] [class*="Panel"],
+[data-theme="dark"] [class*="modal"],
+[data-theme="dark"] [class*="Modal"],
+[data-theme="dark"] [class*="dialog"],
+[data-theme="dark"] [class*="Dialog"],
+[data-theme="dark"] [class*="box"],
+[data-theme="dark"] [class*="Box"] {
+  background: var(--dm-card);
+  color: var(--dm-text);
+  border-color: var(--dm-border);
+}
+
+/* 11. APPROCHE ULTIME : filter sur les éléments à fond blanc
+   On utilise le fait que les backgrounds inline sont définis sur l'élément
+   et on les écrase avec une pseudo-rule très spécifique */
+
+/* Tous les divs directs enfants de #root qui ont un style de background */
+[data-theme="dark"] #root > div,
+[data-theme="dark"] #root > div > div,
+[data-theme="dark"] #root > div > div > div {
+  background-color: inherit;
+}
+
+/* Forcer la propagation de la couleur de texte */
+[data-theme="dark"] * {
+  --local-text: var(--dm-text);
+}
+
+/* ════════════════════════════════════════════════════
+   OVERRIDES INLINE STYLES — attribute selectors
+   React écrit les styles en minuscules, voici tous les cas
+   ════════════════════════════════════════════════════ */
+
+/* Blanc */
+[data-theme="dark"] [style*="#fff"],
+[data-theme="dark"] [style*="#FFF"],
+[data-theme="dark"] [style*="#ffffff"],
+[data-theme="dark"] [style*="#FFFFFF"],
+[data-theme="dark"] [style*="white"] {
+  /* Ne pas overrider si c'est une couleur de texte sur fond coloré */
+}
+
+/* On cible SPÉCIFIQUEMENT background contenant ces valeurs */
+[data-theme="dark"] [style*="background:#fff"],
+[data-theme="dark"] [style*="background: #fff"],
+[data-theme="dark"] [style*="background:#FFF"],
+[data-theme="dark"] [style*="background: #FFF"],
+[data-theme="dark"] [style*="background:#ffffff"],
+[data-theme="dark"] [style*="background: #ffffff"],
+[data-theme="dark"] [style*="background:#FFFFFF"],
+[data-theme="dark"] [style*="background: #FFFFFF"],
+[data-theme="dark"] [style*="background:white"],
+[data-theme="dark"] [style*="background: white"],
+[data-theme="dark"] [style*="background:'#fff'"],
+[data-theme="dark"] [style*="background: '#fff'"],
+[data-theme="dark"] [style*='background:"#fff"'],
+[data-theme="dark"] [style*="background:rgb(255, 255, 255)"],
+[data-theme="dark"] [style*="background: rgb(255, 255, 255)"],
+[data-theme="dark"] [style*="background-color:#fff"],
+[data-theme="dark"] [style*="background-color: #fff"],
+[data-theme="dark"] [style*="background-color: rgb(255, 255, 255)"],
+[data-theme="dark"] [style*="background-color: white"] {
+  background: var(--dm-card) !important;
+  color: var(--dm-text) !important;
+}
+
+/* Fonds page clairs */
+[data-theme="dark"] [style*="#f4f6fa"],
+[data-theme="dark"] [style*="#F4F6FA"],
+[data-theme="dark"] [style*="#f8fafc"],
+[data-theme="dark"] [style*="#F8FAFC"],
+[data-theme="dark"] [style*="#f7f9fc"],
+[data-theme="dark"] [style*="#F7F9FC"],
+[data-theme="dark"] [style*="#f1f5f9"],
+[data-theme="dark"] [style*="#F1F5F9"],
+[data-theme="dark"] [style*="#eef2f8"],
+[data-theme="dark"] [style*="#EEF2F8"],
+[data-theme="dark"] [style*="#fafbfc"],
+[data-theme="dark"] [style*="#FAFBFC"],
+[data-theme="dark"] [style*="#fafbfd"],
+[data-theme="dark"] [style*="#FAFBFD"],
+[data-theme="dark"] [style*="#f0f4fa"],
+[data-theme="dark"] [style*="#F0F4FA"],
+[data-theme="dark"] [style*="#f7faff"],
+[data-theme="dark"] [style*="#F7FAFF"],
+[data-theme="dark"] [style*="rgb(244, 246, 250)"],
+[data-theme="dark"] [style*="rgb(248, 250, 252)"],
+[data-theme="dark"] [style*="rgb(241, 245, 249)"] {
+  background: var(--dm-bg) !important;
+  color: var(--dm-text) !important;
+}
+
+/* Fonds gris clairs secondaires */
+[data-theme="dark"] [style*="#e8edf7"],
+[data-theme="dark"] [style*="#E8EDF7"],
+[data-theme="dark"] [style*="#cbd5e1"],
+[data-theme="dark"] [style*="#CBD5E1"],
+[data-theme="dark"] [style*="#d3dbe9"],
+[data-theme="dark"] [style*="#D3DBE9"],
+[data-theme="dark"] [style*="#e2e8f0"],
+[data-theme="dark"] [style*="#E2E8F0"],
+[data-theme="dark"] [style*="#dae2ef"],
+[data-theme="dark"] [style*="#DAE2EF"],
+[data-theme="dark"] [style*="rgb(226, 232, 240)"],
+[data-theme="dark"] [style*="rgb(203, 213, 225)"] {
+  background: var(--dm-card2) !important;
+  color: var(--dm-text2) !important;
+}
+
+/* Textes noirs/navy */
+[data-theme="dark"] [style*="color:#0b1e3d"],
+[data-theme="dark"] [style*="color:#0B1E3D"],
+[data-theme="dark"] [style*="color: #0b1e3d"],
+[data-theme="dark"] [style*="color: #0B1E3D"],
+[data-theme="dark"] [style*="color:#374151"],
+[data-theme="dark"] [style*="color: #374151"],
+[data-theme="dark"] [style*="color:#273347"],
+[data-theme="dark"] [style*="color: #273347"],
+[data-theme="dark"] [style*="color:#1e293b"],
+[data-theme="dark"] [style*="color:#1E293B"],
+[data-theme="dark"] [style*="color: #1E293B"],
+[data-theme="dark"] [style*="color:#002855"],
+[data-theme="dark"] [style*="color: #002855"],
+[data-theme="dark"] [style*="color:#4b5563"],
+[data-theme="dark"] [style*="color:#4B5563"],
+[data-theme="dark"] [style*="color: #4B5563"],
+[data-theme="dark"] [style*="color:#000"],
+[data-theme="dark"] [style*="color: #000"],
+[data-theme="dark"] [style*="color:black"],
+[data-theme="dark"] [style*="color: black"],
+[data-theme="dark"] [style*="color:rgb(11, 30, 61)"],
+[data-theme="dark"] [style*="color: rgb(11, 30, 61)"],
+[data-theme="dark"] [style*="color:rgb(55, 65, 81)"],
+[data-theme="dark"] [style*="color: rgb(55, 65, 81)"] {
+  color: var(--dm-text) !important;
+}
+
+[data-theme="dark"] [style*="color:#64748b"],
+[data-theme="dark"] [style*="color:#64748B"],
+[data-theme="dark"] [style*="color: #64748B"],
+[data-theme="dark"] [style*="color:#6b7280"],
+[data-theme="dark"] [style*="color:#6B7280"],
+[data-theme="dark"] [style*="color: #6B7280"],
+[data-theme="dark"] [style*="color:#5c6f8a"],
+[data-theme="dark"] [style*="color:#5C6F8A"],
+[data-theme="dark"] [style*="color: #5C6F8A"],
+[data-theme="dark"] [style*="color:#8a9bbc"],
+[data-theme="dark"] [style*="color:#8A9BBC"],
+[data-theme="dark"] [style*="color: #8A9BBC"] {
+  color: var(--dm-text2) !important;
+}
+
+/* Badges bleus */
+[data-theme="dark"] [style*="#eff6ff"],
+[data-theme="dark"] [style*="#EFF6FF"],
+[data-theme="dark"] [style*="#ebf4ff"],
+[data-theme="dark"] [style*="#EBF4FF"],
+[data-theme="dark"] [style*="#e8f0fb"],
+[data-theme="dark"] [style*="#E8F0FB"],
+[data-theme="dark"] [style*="#bfdbfe"],
+[data-theme="dark"] [style*="#BFDBFE"],
+[data-theme="dark"] [style*="#f0f5ff"],
+[data-theme="dark"] [style*="#F0F5FF"],
+[data-theme="dark"] [style*="#f0f7ff"],
+[data-theme="dark"] [style*="#F0F7FF"] {
+  background: rgba(29,78,216,.15) !important;
+  color: #60A5FA !important;
+}
+
+/* Badges rouges */
+[data-theme="dark"] [style*="#fef2f2"],
+[data-theme="dark"] [style*="#FEF2F2"],
+[data-theme="dark"] [style*="#fdecea"],
+[data-theme="dark"] [style*="#FDECEA"],
+[data-theme="dark"] [style*="#fee2e2"],
+[data-theme="dark"] [style*="#FEE2E2"],
+[data-theme="dark"] [style*="#fecaca"],
+[data-theme="dark"] [style*="#FECACA"] {
+  background: rgba(185,28,28,.15) !important;
+  color: #F87171 !important;
+}
+
+/* Badges verts */
+[data-theme="dark"] [style*="#ecfdf5"],
+[data-theme="dark"] [style*="#ECFDF5"],
+[data-theme="dark"] [style*="#e6f5ee"],
+[data-theme="dark"] [style*="#E6F5EE"],
+[data-theme="dark"] [style*="#d1fae5"],
+[data-theme="dark"] [style*="#D1FAE5"],
+[data-theme="dark"] [style*="#f0fdf4"],
+[data-theme="dark"] [style*="#F0FDF4"],
+[data-theme="dark"] [style*="#a7f3d0"],
+[data-theme="dark"] [style*="#A7F3D0"],
+[data-theme="dark"] [style*="#f0fdfa"],
+[data-theme="dark"] [style*="#F0FDFA"] {
+  background: rgba(5,150,105,.15) !important;
+  color: #34D399 !important;
+}
+
+/* Badges orange */
+[data-theme="dark"] [style*="#fff7ed"],
+[data-theme="dark"] [style*="#FFF7ED"],
+[data-theme="dark"] [style*="#fffbeb"],
+[data-theme="dark"] [style*="#FFFBEB"],
+[data-theme="dark"] [style*="#fff4d6"],
+[data-theme="dark"] [style*="#FFF4D6"],
+[data-theme="dark"] [style*="#fed7aa"],
+[data-theme="dark"] [style*="#FED7AA"],
+[data-theme="dark"] [style*="#fef3c7"],
+[data-theme="dark"] [style*="#FEF3C7"] {
+  background: rgba(217,119,6,.15) !important;
+  color: #FCD34D !important;
+}
+
+/* Badges violet */
+[data-theme="dark"] [style*="#f5f3ff"],
+[data-theme="dark"] [style*="#F5F3FF"],
+[data-theme="dark"] [style*="#ede9fe"],
+[data-theme="dark"] [style*="#EDE9FE"],
+[data-theme="dark"] [style*="#ddd6fe"],
+[data-theme="dark"] [style*="#DDD6FE"] {
+  background: rgba(109,40,217,.15) !important;
+  color: #A78BFA !important;
+}
+
+/* Couleurs texte sémantiques → versions lisibles dark */
+[data-theme="dark"] [style*="color:#1d4ed8"],
+[data-theme="dark"] [style*="color:#1D4ED8"],
+[data-theme="dark"] [style*="color: #1D4ED8"],
+[data-theme="dark"] [style*="color:#0057b8"],
+[data-theme="dark"] [style*="color:#0057B8"],
+[data-theme="dark"] [style*="color: #0057B8"],
+[data-theme="dark"] [style*="color:#2563eb"],
+[data-theme="dark"] [style*="color:#2563EB"],
+[data-theme="dark"] [style*="color: #2563EB"] { color: #60A5FA !important; }
+
+[data-theme="dark"] [style*="color:#059669"],
+[data-theme="dark"] [style*="color: #059669"],
+[data-theme="dark"] [style*="color:#1a7a4a"],
+[data-theme="dark"] [style*="color:#1A7A4A"],
+[data-theme="dark"] [style*="color: #1A7A4A"],
+[data-theme="dark"] [style*="color:#15803d"],
+[data-theme="dark"] [style*="color:#15803D"],
+[data-theme="dark"] [style*="color: #15803D"] { color: #34D399 !important; }
+
+[data-theme="dark"] [style*="color:#b91c1c"],
+[data-theme="dark"] [style*="color:#B91C1C"],
+[data-theme="dark"] [style*="color: #B91C1C"],
+[data-theme="dark"] [style*="color:#c0392b"],
+[data-theme="dark"] [style*="color:#C0392B"],
+[data-theme="dark"] [style*="color: #C0392B"],
+[data-theme="dark"] [style*="color:#dc2626"],
+[data-theme="dark"] [style*="color:#DC2626"],
+[data-theme="dark"] [style*="color: #DC2626"] { color: #F87171 !important; }
+
+[data-theme="dark"] [style*="color:#d97706"],
+[data-theme="dark"] [style*="color:#D97706"],
+[data-theme="dark"] [style*="color: #D97706"],
+[data-theme="dark"] [style*="color:#c8982a"],
+[data-theme="dark"] [style*="color:#C8982A"],
+[data-theme="dark"] [style*="color: #C8982A"] { color: #FCD34D !important; }
+
+[data-theme="dark"] [style*="color:#7c3aed"],
+[data-theme="dark"] [style*="color:#7C3AED"],
+[data-theme="dark"] [style*="color:#6d28d9"],
+[data-theme="dark"] [style*="color:#6D28D9"],
+[data-theme="dark"] [style*="color:#7b2d8b"],
+[data-theme="dark"] [style*="color:#7B2D8B"] { color: #A78BFA !important; }
+
+/* Bordures claires */
+[data-theme="dark"] [style*="border"] {
+  /* On ne peut pas overrider toutes les bordures sans casser les colorées.
+     On le fait via les classes CSS modules */
+}
+
+/* Overlay modals */
+[data-theme="dark"] [style*="rgba(0,28,60,.48)"],
+[data-theme="dark"] [style*="rgba(0, 0, 0, 0.4)"],
+[data-theme="dark"] [style*="rgba(0,0,0,0.4)"],
+[data-theme="dark"] [style*="rgba(0,0,0,.4)"],
+[data-theme="dark"] [style*="rgba(0,0,0,.5)"] {
+  background: rgba(0,0,0,.82) !important;
+}
+
+/* Topbar gradient */
+[data-theme="dark"] [style*="linear-gradient(90deg, #0B2347"],
+[data-theme="dark"] [style*="linear-gradient(90deg,#0B2347"],
+[data-theme="dark"] [style*="linear-gradient(90deg, #0B1E3D"],
+[data-theme="dark"] [style*="linear-gradient(90deg,#0B1E3D"] {
+  background: linear-gradient(90deg, #05101E 0%, #0D1E36 100%) !important;
+}
+
+/* Boutons navy → visibles en dark */
+[data-theme="dark"] [style*="background:#0b1e3d"],
+[data-theme="dark"] [style*="background:#0B1E3D"],
+[data-theme="dark"] [style*="background: #0B1E3D"],
+[data-theme="dark"] [style*="background: #0b1e3d"] {
+  background: #1E3A5F !important;
+  color: #E2E8F0 !important;
+}
+
+/* Lignes séparatrices */
+[data-theme="dark"] [style*="background:#eef2f8"],
+[data-theme="dark"] [style*="background:#EEF2F8"],
+[data-theme="dark"] [style*="background: #EEF2F8"][style*="flex:1"],
+[data-theme="dark"] [style*="background:#f1f5f9"][style*="height:1"],
+[data-theme="dark"] [style*="background:#F1F5F9"][style*="height:1"],
+[data-theme="dark"] [style*="background: #F1F5F9"][style*="height:1"] {
+  background: var(--dm-border) !important;
+}
+
+/* Progress bars fond */
+[data-theme="dark"] [style*="background:#f1f5f9"][style*="border-radius"],
+[data-theme="dark"] [style*="background:#F1F5F9"][style*="border-radius"],
+[data-theme="dark"] [style*="background:#e5e7eb"],
+[data-theme="dark"] [style*="background:#E5E7EB"] {
+  background: rgba(255,255,255,.10) !important;
+}
+
+ 
+/* ═══════════════════════════════════════════════════════════════
+   DARK MODE — PAGE PROFIL (.pp-* classes)
+   ═══════════════════════════════════════════════════════════════ */
+ 
+/* Fond général de la page */
+[data-theme="dark"] .pp {
+  background: #0D1117 !important;
+}
+ 
+/* Section wrapper (card blanche) */
+[data-theme="dark"] .pp-section {
+  background: #161B27 !important;
+  border-color: rgba(255,255,255,.09) !important;
+}
+ 
+/* Section header CBD5E1 → sombre */
+[data-theme="dark"] .pp-section > div:first-child,
+[data-theme="dark"] .pp-section-header,
+[data-theme="dark"] [class*="pp-section"] > [style*="background:#CBD5E1"],
+[data-theme="dark"] [class*="pp-section"] > [style*="background: #CBD5E1"] {
+  background: rgba(255,255,255,.05) !important;
+  color: #94A3B8 !important;
+}
+ 
+/* Section header plain (F8FAFC) → sombre */
+[data-theme="dark"] .pp-section-plain,
+[data-theme="dark"] [class*="pp-section-plain"] {
+  background: rgba(255,255,255,.04) !important;
+  border-color: rgba(255,255,255,.08) !important;
+}
+ 
+/* Icônes des sections */
+[data-theme="dark"] .pp-section-ico,
+[data-theme="dark"] .pp-section-ico-plain {
+  background: rgba(255,255,255,.08) !important;
+  color: #94A3B8 !important;
+}
+ 
+/* Titres des sections */
+[data-theme="dark"] .pp-section-title,
+[data-theme="dark"] .pp-section-title-plain {
+  color: #94A3B8 !important;
+}
+ 
+/* Rows (lignes d'information) */
+[data-theme="dark"] .pp-row {
+  background: #161B27 !important;
+  border-bottom-color: rgba(255,255,255,.06) !important;
+}
+[data-theme="dark"] .pp-row:hover {
+  background: #1A2030 !important;
+}
+ 
+/* Icônes des rows */
+[data-theme="dark"] .pp-row-ico {
+  background: rgba(255,255,255,.07) !important;
+  color: #94A3B8 !important;
+}
+ 
+/* Valeurs et labels des rows */
+[data-theme="dark"] .pp-row-val {
+  color: #E2E8F0 !important;
+}
+[data-theme="dark"] .pp-row-lbl {
+  color: #475569 !important;
+}
+ 
+/* Boutons */
+[data-theme="dark"] .pp-ghost {
+  background: rgba(255,255,255,.06) !important;
+  color: #E2E8F0 !important;
+  border-color: rgba(255,255,255,.12) !important;
+}
+[data-theme="dark"] .pp-ghost:hover {
+  background: rgba(255,255,255,.10) !important;
+}
+[data-theme="dark"] .pp-navy {
+  background: #1E3A5F !important;
+  color: #E2E8F0 !important;
+}
+[data-theme="dark"] .pp-navy:hover {
+  background: #2A4E80 !important;
+}
+ 
+/* Inputs */
+[data-theme="dark"] .pp-input {
+  background: #131929 !important;
+  color: #E2E8F0 !important;
+  border-color: rgba(255,255,255,.12) !important;
+}
+[data-theme="dark"] .pp-input:focus {
+  border-color: rgba(255,255,255,.3) !important;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.05) !important;
+}
+ 
+/* Labels */
+[data-theme="dark"] .pp-label {
+  color: #64748B !important;
+}
+ 
+/* Alerts */
+[data-theme="dark"] .pp-ok {
+  background: rgba(29,78,216,.15) !important;
+  border-color: rgba(147,197,253,.2) !important;
+  color: #93C5FD !important;
+}
+[data-theme="dark"] .pp-err {
+  background: rgba(185,28,28,.15) !important;
+  border-color: rgba(252,165,165,.2) !important;
+  color: #FCA5A5 !important;
+}
+ 
+/* ═══════════════════════════════════════════════════════════════
+   DARK MODE — COULEURS SÉMANTIQUES FONCÉES
+   Vert, Rouge, Orange, Bleu, Violet → tons sombres & sobres
+   ═══════════════════════════════════════════════════════════════ */
+ 
+/* VERT → fond vert très foncé */
+[data-theme="dark"] [style*="#ECFDF5"],
+[data-theme="dark"] [style*="#ecfdf5"],
+[data-theme="dark"] [style*="#E6F5EE"],
+[data-theme="dark"] [style*="#e6f5ee"],
+[data-theme="dark"] [style*="#D1FAE5"],
+[data-theme="dark"] [style*="#d1fae5"],
+[data-theme="dark"] [style*="#F0FDF4"],
+[data-theme="dark"] [style*="#f0fdf4"],
+[data-theme="dark"] [style*="#F0FDFA"],
+[data-theme="dark"] [style*="#f0fdfa"],
+[data-theme="dark"] [style*="#A7F3D0"],
+[data-theme="dark"] [style*="#a7f3d0"],
+[data-theme="dark"] [style*="#86EFAC"],
+[data-theme="dark"] [style*="#86efac"],
+[data-theme="dark"] [style*="150, 105"],
+[data-theme="dark"] [style*="26, 122, 74"] {
+  background-color: #0A2318 !important;
+  color: #86EFAC !important;
+  border-color: rgba(134,239,172,.2) !important;
+}
+ 
+/* ROUGE → fond rouge très foncé */
+[data-theme="dark"] [style*="#FEF2F2"],
+[data-theme="dark"] [style*="#fef2f2"],
+[data-theme="dark"] [style*="#FDECEA"],
+[data-theme="dark"] [style*="#fdecea"],
+[data-theme="dark"] [style*="#FEE2E2"],
+[data-theme="dark"] [style*="#fee2e2"],
+[data-theme="dark"] [style*="#FECACA"],
+[data-theme="dark"] [style*="#fecaca"],
+[data-theme="dark"] [style*="185, 28, 28"],
+[data-theme="dark"] [style*="192, 57, 43"],
+[data-theme="dark"] [style*="220, 38, 38"] {
+  background-color: #1F0A0A !important;
+  color: #FCA5A5 !important;
+  border-color: rgba(252,165,165,.2) !important;
+}
+ 
+/* ORANGE/JAUNE → fond orange très foncé */
+[data-theme="dark"] [style*="#FFF7ED"],
+[data-theme="dark"] [style*="#fff7ed"],
+[data-theme="dark"] [style*="#FFFBEB"],
+[data-theme="dark"] [style*="#fffbeb"],
+[data-theme="dark"] [style*="#FFF4D6"],
+[data-theme="dark"] [style*="#fff4d6"],
+[data-theme="dark"] [style*="#FEF3C7"],
+[data-theme="dark"] [style*="#fef3c7"],
+[data-theme="dark"] [style*="#FED7AA"],
+[data-theme="dark"] [style*="#fed7aa"],
+[data-theme="dark"] [style*="217, 119, 6"],
+[data-theme="dark"] [style*="200, 152, 42"],
+[data-theme="dark"] [style*="146, 64, 14"] {
+  background-color: #1C1100 !important;
+  color: #FDE68A !important;
+  border-color: rgba(253,230,138,.2) !important;
+}
+ 
+/* BLEU → fond bleu très foncé */
+[data-theme="dark"] [style*="#EFF6FF"],
+[data-theme="dark"] [style*="#eff6ff"],
+[data-theme="dark"] [style*="#EBF4FF"],
+[data-theme="dark"] [style*="#ebf4ff"],
+[data-theme="dark"] [style*="#E8F0FB"],
+[data-theme="dark"] [style*="#e8f0fb"],
+[data-theme="dark"] [style*="#BFDBFE"],
+[data-theme="dark"] [style*="#bfdbfe"],
+[data-theme="dark"] [style*="#F0F5FF"],
+[data-theme="dark"] [style*="#f0f5ff"],
+[data-theme="dark"] [style*="#F0F7FF"],
+[data-theme="dark"] [style*="#f0f7ff"],
+[data-theme="dark"] [style*="#EEF5FF"],
+[data-theme="dark"] [style*="#eef5ff"],
+[data-theme="dark"] [style*="#7cc6e0"],
+[data-theme="dark"] [style*="#7CC6E0"],
+[data-theme="dark"] [style*="29, 78, 216"],
+[data-theme="dark"] [style*="0, 87, 184"],
+[data-theme="dark"] [style*="37, 99, 235"] {
+  background-color: #050F2A !important;
+  color: #93C5FD !important;
+  border-color: rgba(147,197,253,.2) !important;
+}
+ 
+/* VIOLET → fond violet très foncé */
+[data-theme="dark"] [style*="#F5F3FF"],
+[data-theme="dark"] [style*="#f5f3ff"],
+[data-theme="dark"] [style*="#EDE9FE"],
+[data-theme="dark"] [style*="#ede9fe"],
+[data-theme="dark"] [style*="#DDD6FE"],
+[data-theme="dark"] [style*="#ddd6fe"],
+[data-theme="dark"] [style*="109, 40, 217"],
+[data-theme="dark"] [style*="91, 33, 182"],
+[data-theme="dark"] [style*="124, 58, 237"],
+[data-theme="dark"] [style*="123, 45, 139"] {
+  background-color: #130A28 !important;
+  color: #C4B5FD !important;
+  border-color: rgba(196,181,253,.2) !important;
+}
+ 
+/* TEXTES COLORÉS → versions lisibles dark */
+[data-theme="dark"] [style*="color:#059669"],
+[data-theme="dark"] [style*="color: #059669"],
+[data-theme="dark"] [style*="color:#1A7A4A"],
+[data-theme="dark"] [style*="color: #1A7A4A"],
+[data-theme="dark"] [style*="color:#15803D"],
+[data-theme="dark"] [style*="color: #15803D"],
+[data-theme="dark"] [style*="color:#16A34A"],
+[data-theme="dark"] [style*="color: #16A34A"],
+[data-theme="dark"] [style*="color: rgb(5, 150, 105)"],
+[data-theme="dark"] [style*="color: rgb(26, 122, 74)"] { color: #86EFAC !important; }
+ 
+[data-theme="dark"] [style*="color:#B91C1C"],
+[data-theme="dark"] [style*="color: #B91C1C"],
+[data-theme="dark"] [style*="color:#C0392B"],
+[data-theme="dark"] [style*="color: #C0392B"],
+[data-theme="dark"] [style*="color:#DC2626"],
+[data-theme="dark"] [style*="color: #DC2626"],
+[data-theme="dark"] [style*="color: rgb(185, 28, 28)"],
+[data-theme="dark"] [style*="color: rgb(192, 57, 43)"],
+[data-theme="dark"] [style*="color: rgb(220, 38, 38)"] { color: #FCA5A5 !important; }
+ 
+[data-theme="dark"] [style*="color:#D97706"],
+[data-theme="dark"] [style*="color: #D97706"],
+[data-theme="dark"] [style*="color:#C8982A"],
+[data-theme="dark"] [style*="color: #C8982A"],
+[data-theme="dark"] [style*="color:#92400E"],
+[data-theme="dark"] [style*="color: #92400E"],
+[data-theme="dark"] [style*="color: rgb(217, 119, 6)"],
+[data-theme="dark"] [style*="color: rgb(200, 152, 42)"] { color: #FDE68A !important; }
+ 
+[data-theme="dark"] [style*="color:#1D4ED8"],
+[data-theme="dark"] [style*="color: #1D4ED8"],
+[data-theme="dark"] [style*="color:#0057B8"],
+[data-theme="dark"] [style*="color: #0057B8"],
+[data-theme="dark"] [style*="color:#2563EB"],
+[data-theme="dark"] [style*="color: #2563EB"],
+[data-theme="dark"] [style*="color:#0369A1"],
+[data-theme="dark"] [style*="color: #0369A1"],
+[data-theme="dark"] [style*="color: rgb(29, 78, 216)"],
+[data-theme="dark"] [style*="color: rgb(0, 87, 184)"] { color: #93C5FD !important; }
+ 
+[data-theme="dark"] [style*="color:#7C3AED"],
+[data-theme="dark"] [style*="color: #7C3AED"],
+[data-theme="dark"] [style*="color:#6D28D9"],
+[data-theme="dark"] [style*="color: #6D28D9"],
+[data-theme="dark"] [style*="color:#7B2D8B"],
+[data-theme="dark"] [style*="color: #7B2D8B"],
+[data-theme="dark"] [style*="color: rgb(109, 40, 217)"] { color: #C4B5FD !important; }
+ 
+/* CSS filter pour réduire la saturation des badges colorés */
+[data-theme="dark"] [class*="badge"],
+[data-theme="dark"] [class*="Badge"],
+[data-theme="dark"] [class*="tag"],
+[data-theme="dark"] [class*="Tag"],
+[data-theme="dark"] [class*="status"],
+[data-theme="dark"] [class*="Status"] {
+  filter: brightness(0.80) saturate(0.75);
+}
+
+/* ═══════════════════════════════════════════════════
+   DARK MODE — CORRECTIONS COMPLÉMENTAIRES
+   ═══════════════════════════════════════════════════ */
+
+/* Dropdown profil et notification */
+[data-theme="dark"] .profileDrop,
+[data-theme="dark"] .notifMiniDrop {
+  background: var(--dm-card) !important;
+  border-color: var(--dm-border) !important;
+  box-shadow: var(--dm-shadow2) !important;
+}
+
+/* Tous les textes dans les dropdowns */
+[data-theme="dark"] .dropName,
+[data-theme="dark"] .dropMat,
+[data-theme="dark"] .dropSectionLabel,
+[data-theme="dark"] .notifMiniHead {
+  color: var(--dm-text) !important;
+}
+
+[data-theme="dark"] .dropItem {
+  color: var(--dm-text2) !important;
+}
+[data-theme="dark"] .dropItem:hover {
+  background: var(--dm-row-hover) !important;
+  color: var(--dm-text) !important;
+}
+
+[data-theme="dark"] .dropLine,
+[data-theme="dark"] .dropHead {
+  border-color: var(--dm-border) !important;
+}
+
+/* Notification mini-drop */
+[data-theme="dark"] .notifMiniItem {
+  border-bottom-color: var(--dm-border) !important;
+}
+[data-theme="dark"] .notifMiniItem:hover,
+[data-theme="dark"] .notifMiniItemUnread {
+  background: var(--dm-row-hover) !important;
+}
+[data-theme="dark"] .notifMiniMsg { color: var(--dm-text) !important; }
+[data-theme="dark"] .notifMiniTime { color: var(--dm-text3) !important; }
+[data-theme="dark"] .notifMiniHead { border-color: var(--dm-border) !important; }
+[data-theme="dark"] .notifMiniFooter {
+  background: var(--dm-card2) !important;
+  color: #60A5FA !important;
+  border-color: var(--dm-border) !important;
+}
+[data-theme="dark"] .notifMiniFooter:hover {
+  background: var(--dm-row-hover) !important;
+}
+[data-theme="dark"] .notifMiniMarkAll { color: #60A5FA !important; }
+
+/* Bouton profil dans la topbar */
+[data-theme="dark"] .profileWrap button {
+  background: var(--dm-card2) !important;
+  border-color: var(--dm-border) !important;
+  color: var(--dm-text) !important;
+}
+
+/* Barre de recherche topbar */
+[data-theme="dark"] .topbarSearch,
+[data-theme="dark"] [style*="background: var(--badge-bg"],
+[data-theme="dark"] [style*="background:var(--badge-bg"] {
+  background: var(--dm-card2) !important;
+  border-color: var(--dm-border) !important;
+  color: var(--dm-text3) !important;
+}
+
+/* Header topbar (sticky) */
+[data-theme="dark"] header {
+  background: var(--dm-topbar) !important;
+  border-color: var(--dm-topbar-b) !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,.05) !important;
+}
+
+/* Icon buttons topbar */
+[data-theme="dark"] .topbarIconBtn {
+  color: var(--dm-text2) !important;
+}
+[data-theme="dark"] .topbarIconBtn:hover {
+  background: var(--dm-row-hover) !important;
+  color: var(--dm-text) !important;
+}
+
+/* dropRoleBadge */
+[data-theme="dark"] .dropRoleBadge {
+  filter: brightness(0.75) saturate(0.7);
+}
+
+/* dropAvatarLg */
+[data-theme="dark"] .dropAvatarLg {
+  filter: brightness(0.85);
+}
+
+/* dropItemRed */
+[data-theme="dark"] .dropItemRed { color: #F87171 !important; }
+[data-theme="dark"] .dropItemRed:hover {
+  background: rgba(185,28,28,.15) !important;
+  color: #FCA5A5 !important;
+}
+
+/* dropSection label */
+[data-theme="dark"] .dropSection { background: transparent !important; }
+
+/* Séparateur vertical topbar */
+[data-theme="dark"] [style*="width: 1px"][style*="height: 24px"],
+[data-theme="dark"] [style*="width:1px"][style*="height:24px"] {
+  background: var(--dm-border) !important;
+}
+
+/* NotificationsPage — fond général */
+[data-theme="dark"] .nitem:hover { background: var(--dm-row-hover) !important; }
+[data-theme="dark"] .nitem.sel   { background: rgba(29,78,216,.15) !important; border-left-color: #60A5FA !important; }
+[data-theme="dark"] .ntab        { background: var(--dm-card) !important; border-color: var(--dm-border) !important; color: var(--dm-text2) !important; }
+[data-theme="dark"] .ntab:hover  { background: var(--dm-row-hover) !important; }
+[data-theme="dark"] .ntab.active { background: #1E3A5F !important; color: var(--dm-text) !important; }
+[data-theme="dark"] .ndel:hover  { background: rgba(185,28,28,.15) !important; color: #F87171 !important; border-color: rgba(252,165,165,.2) !important; }
+[data-theme="dark"] .nmark:hover { background: rgba(29,78,216,.12) !important; }

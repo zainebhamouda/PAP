@@ -1,0 +1,35 @@
+/* ExpertRapports.module.css — conservé pour compatibilité si d'autres composants l'importent */
+
+/* Les styles sont désormais inline dans le JSX pour plus de contrôle.
+   Ce fichier peut rester vide ou contenir des overrides globaux. */
+
+@media (max-width: 768px) {
+  /* Responsive table: stack rows */
+  table thead {
+    display: none;
+  }
+  table,
+  table tbody,
+  table tr,
+  table td {
+    display: block;
+    width: 100%;
+  }
+  table tr {
+    border-bottom: 1px solid #DAE2EF;
+    padding: 0.5rem 0;
+  }
+  table td {
+    padding: 0.45rem 1rem;
+  }
+  table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.67rem;
+    color: #8A9BBC;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+    letter-spacing: .05em;
+  }
+}
