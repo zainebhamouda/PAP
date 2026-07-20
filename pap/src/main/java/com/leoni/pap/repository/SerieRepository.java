@@ -19,4 +19,5 @@ public interface SerieRepository extends JpaRepository<Serie, Integer> {
 
     @Query("SELECT s FROM Serie s JOIN s.projet p JOIN p.segment seg WHERE seg.id = :segmentId AND s.actif = true")
     List<Serie> findBySegmentId(@Param("segmentId") Integer segmentId);
+
 }

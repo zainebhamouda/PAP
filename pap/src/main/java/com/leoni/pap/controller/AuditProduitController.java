@@ -101,8 +101,71 @@ public class AuditProduitController {
     @PreAuthorize("hasRole('AUDITEUR')")
     public ResponseEntity<List<AuditResponse>> getMesAuditsProduit(
             @RequestParam(required = false) Long planificationId,
+            @RequestParam(required = false) Integer projetId,
+            @RequestParam(required = false) Integer serieId,
             @AuthenticationPrincipal UserDetails user) {
-        return ResponseEntity.ok(auditService.getMesAuditsProduit(getCurrentUserId(user), planificationId));
+        return ResponseEntity.ok(auditService.getMesAuditsProduit(
+                getCurrentUserId(user), planificationId, projetId, serieId));
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // A-bis. SUIVI ENTRE COLLÈGUES DU MÊME PLANT (lecture seule)
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * GET /api/audit-produit/audits-collegues-plant
+     *
+     * ✅ NOUVEAU — Audits produit encore actifs (PLANIFIE ou EN_COURS) des
+     * collègues du même plant que l'auditeur connecté. Permet à un auditeur
+     * de suivre l'avancement de la réalisation des audits de ses camarades
+     * du même plant, sans droit de modification.
+     */
+    @GetMapping("/audits-collegues-plant")
+    @PreAuthorize("hasRole('AUDITEUR')")
+    public ResponseEntity<List<AuditResponse>> getAuditsColleguesPlant(
+            @AuthenticationPrincipal UserDetails user) {
+        return ResponseEntity.ok(auditService.getAuditsColleguesMemePlant(getCurrentUserId(user)));
+    }
+
+    /**
+     * GET /api/audit-produit/mes-suivis
+     *
+     * ✅ NOUVEAU — Audits que l'auditeur connecté suit déjà (onglet "Mon
+     * suivi"), avec leur statut à jour.
+     */
+    @GetMapping("/mes-suivis")
+    @PreAuthorize("hasRole('AUDITEUR')")
+    public ResponseEntity<List<AuditResponse>> getMesSuivis(
+            @AuthenticationPrincipal UserDetails user) {
+        return ResponseEntity.ok(auditService.getAuditsSuivisPar(getCurrentUserId(user)));
+    }
+
+    /**
+     * PUT /api/audit-produit/{id}/suivre
+     *
+     * ✅ NOUVEAU — L'auditeur connecté commence à suivre la réalisation
+     * d'un audit d'un collègue du même plant (lecture seule, aucun droit
+     * de modification/démarrage/clôture).
+     */
+    @PutMapping("/{id}/suivre")
+    @PreAuthorize("hasRole('AUDITEUR')")
+    public ResponseEntity<AuditResponse> suivreAudit(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails user) {
+        return ResponseEntity.ok(auditService.suivreAudit(id, getCurrentUserId(user)));
+    }
+
+    /**
+     * PUT /api/audit-produit/{id}/ne-plus-suivre
+     *
+     * ✅ NOUVEAU — L'auditeur connecté arrête de suivre cet audit.
+     */
+    @PutMapping("/{id}/ne-plus-suivre")
+    @PreAuthorize("hasRole('AUDITEUR')")
+    public ResponseEntity<AuditResponse> nePlusSuivreAudit(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails user) {
+        return ResponseEntity.ok(auditService.nePlusSuivreAudit(id, getCurrentUserId(user)));
     }
 
     @GetMapping("/{id}")

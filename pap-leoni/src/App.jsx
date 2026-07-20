@@ -58,6 +58,7 @@ import AuditeurLeaderboardPage from './pages/expert/AuditeurLeaderboardPage';
 import AuditeurProfilePage from './pages/expert/AuditeurProfilePage';
 import ClassificationAuditeurs from './components/certif/ClassificationAuditeurs';
 import AuditeurPlanificationPage from './pages/auditeur/AuditeurPlanificationPage';
+import AuditeurSuiviPlanification from './pages/auditeur/AuditeurSuiviPlanification';
 
 function PrivateRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
@@ -229,6 +230,7 @@ export default function App() {
             <Route path="/auditeur/rapports"       element={<PrivateRoute allowedRoles={['AUDITEUR']}><AuditeurRapportsPage /></PrivateRoute>} />
             <Route path="/auditeur/rapport-mensuel" element={<PrivateRoute allowedRoles={['AUDITEUR']}><RapportsMensuelsPage /></PrivateRoute>} />
             <Route path="/auditeur/planification"  element={<PrivateRoute allowedRoles={['AUDITEUR']}><AuditeurPlanificationPage /></PrivateRoute>} />
+            <Route path="/auditeur/suivi-planification" element={<PrivateRoute allowedRoles={['AUDITEUR']}><AuditeurSuiviPlanification /></PrivateRoute>} />
 
             {/* ══ CHEF SERVICE ══ */}
             <Route path="/chef-service/dashboard"         element={<PrivateRoute allowedRoles={['CHEF_SERVICE']}><ChefServiceDashboard /></PrivateRoute>} />

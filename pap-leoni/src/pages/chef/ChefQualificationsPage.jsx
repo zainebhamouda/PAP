@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { chefQualifAPI } from '../../services/certifAPI';
-import api from '../../services/api';
+import api, { certificatAuditeurAPI } from '../../services/api';
 import ModalQrCode from '../../components/certif/ModalQrCode';
 import ModalReponsesTheoriques from '../../components/certif/ModalReponsesTheoriques';
 /* ─── Icons (même style que AuditeurQualifications) ─── */
@@ -79,6 +79,31 @@ function ScoreBadge({ icon, label, value, seuil }) {
       <span style={{ opacity:.55,fontWeight:500 }}>/ {seuil}%</span>
     </span>
   );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ✅ NOUVEAU — Adapte un certificat importé (hors circuit examen) au
+   même format qu'un "passage" issu de l'examen normal, pour l'afficher
+   de façon uniforme dans la liste du chef (onglets Qualifiés / Tous /
+   Historique certif.).
+═══════════════════════════════════════════════════════════════════ */
+function mapCertifImporte(c) {
+  return {
+    id: `imp-${c.id}`,
+    isImporte: true,
+    statut: 'CERTIFIE',
+    statutCertificat: 'VALIDE_CHEF',
+    auditeurNom: c.auditeurNom,
+    auditeurMatricule: c.auditeurMatricule,
+    certificationTitre: 'Certificat importé (avant PAP)',
+    certificationClientNom: c.plantNom || null,
+    dateValidationChef: c.dateObtention,
+    dateGenerationCertif: c.dateObtention,
+    dateDebut: c.dateObtention,
+    dateExpiration: c.dateExpiration,
+    expertGenerateurNom: c.importeParNom,
+    cheminPdf: c.cheminPdf,
+  };
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -356,7 +381,19 @@ function PassageLigne({ p, idx, total, onValider }) {
   const theoPct    = p.scoreTheoriquePct ?? (p.scoreTheorique!=null ? Math.round(p.scoreTheorique*100/20) : null);
   const seuil      = p.seuilTheorique || 70;
 
+  // ✅ Base URL statique (sans /api) pour les certificats importés — fichier
+  // servi tel quel par le backend, sans passer par les endpoints chef-service
+  // qui exigent un passage lié au circuit d'examen (invalides pour un id "imp-x").
+  const staticBaseUrl = (api.defaults?.baseURL || 'http://localhost:8080/api').replace('/api', '');
+
   const openCertif = () => {
+    // ✅ Certificat importé : pas d'appel API, affichage direct du fichier statique.
+    if (p.isImporte) {
+      setShowModal(true);
+      setLoadingPdf(false);
+      setPdfBlobUrl(p.cheminPdf ? `${staticBaseUrl}${p.cheminPdf}` : null);
+      return;
+    }
     setShowModal(true);
     setLoadingPdf(true);
     api.get(`/chef-service/qualifications/${p.id}/certificat/view`, { responseType:'blob' })
@@ -366,11 +403,20 @@ function PassageLigne({ p, idx, total, onValider }) {
   };
 
   const closeModal = () => {
-    if (pdfBlobUrl) window.URL.revokeObjectURL(pdfBlobUrl);
+    if (pdfBlobUrl && !p.isImporte) window.URL.revokeObjectURL(pdfBlobUrl);
     setShowModal(false); setPdfBlobUrl(null);
   };
 
   const handleDownload = async () => {
+    // ✅ Certificat importé : téléchargement direct du fichier statique.
+    if (p.isImporte) {
+      if (!p.cheminPdf) return;
+      const a = document.createElement('a');
+      a.href = `${staticBaseUrl}${p.cheminPdf}`;
+      a.download = `certificat_${p.auditeurNom||p.id}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+      return;
+    }
     try {
       const r = await api.get(`/chef-service/qualifications/${p.id}/certificat/download`, { responseType:'blob' });
       const url = window.URL.createObjectURL(r.data);
@@ -408,6 +454,12 @@ function PassageLigne({ p, idx, total, onValider }) {
             {certifSt?.label && (
               <span style={{ background:certifSt.bg,color:certifSt.color,fontSize:'.7rem',fontWeight:600,padding:'3px 10px',borderRadius:99,flexShrink:0,border:`1px solid ${certifSt.border}`,letterSpacing:'.01em' }}>
                 {certifSt.label}
+              </span>
+            )}
+            {/* ✅ NOUVEAU — badge distinctif pour les certificats importés */}
+            {p.isImporte && (
+              <span style={{ background:'#F0FDFA',color:'#0F766E',fontSize:'.68rem',fontWeight:700,padding:'3px 10px',borderRadius:99,border:'1px solid #99F6E4' }}>
+                Importé
               </span>
             )}
           </div>
@@ -454,28 +506,30 @@ function PassageLigne({ p, idx, total, onValider }) {
                 {Ico.dl} Exporter
               </button>
 
-              {/* QR Code button */}
-              <button
-                type="button"
-                onClick={() => setShowQr(true)}
-                style={{
-                  display:'inline-flex', alignItems:'center', gap:8,
-                  padding:'7px 12px',
-                  background:'linear-gradient(135deg,#FAF5FF,#F3E8FF)',
-                  color:'#6D28D9',
-                  border:'1px solid #c5bcef', borderRadius:10,
-                  fontSize:'.8rem', fontWeight:800,
-                  cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap',
-                  boxShadow:'0 2px 8px rgba(124,58,237,.10)',
-                  transition:'all .14s ease',
-                }}>
-                <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:18, height:18, borderRadius:6, background:'#fff', border:'1px solid #E9D5FF', color:'#7C3AED', flexShrink:0 }}>
-                  <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h3v3h-3zM19 14h1v1h-1zM17 17h2v2h-2zM19 19h1v1h-1z" />
-                  </svg>
-                </span>
-                QR Code
-              </button>
+              {/* QR Code button — non disponible pour un certificat importé */}
+              {!p.isImporte && (
+                <button
+                  type="button"
+                  onClick={() => setShowQr(true)}
+                  style={{
+                    display:'inline-flex', alignItems:'center', gap:8,
+                    padding:'7px 12px',
+                    background:'linear-gradient(135deg,#FAF5FF,#F3E8FF)',
+                    color:'#6D28D9',
+                    border:'1px solid #c5bcef', borderRadius:10,
+                    fontSize:'.8rem', fontWeight:800,
+                    cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap',
+                    boxShadow:'0 2px 8px rgba(124,58,237,.10)',
+                    transition:'all .14s ease',
+                  }}>
+                  <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:18, height:18, borderRadius:6, background:'#fff', border:'1px solid #E9D5FF', color:'#7C3AED', flexShrink:0 }}>
+                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h3v3h-3zM19 14h1v1h-1zM17 17h2v2h-2zM19 19h1v1h-1z" />
+                    </svg>
+                  </span>
+                  QR Code
+                </button>
+              )}
             </>
           )}
         </div>
@@ -545,7 +599,7 @@ function PassageLigne({ p, idx, total, onValider }) {
         </div>
       )}
 
-      {showQr && (
+      {showQr && !p.isImporte && (
         <ModalQrCode
           passageId={p.id}
           auditeurNom={p.auditeurNom}
@@ -562,6 +616,7 @@ function PassageLigne({ p, idx, total, onValider }) {
 ═══════════════════════════════════════════════════════════════════ */
 export default function ChefQualificationsPage() {
   const [passages,     setPassages]     = useState([]);
+  const [certifsImportes, setCertifsImportes] = useState([]); // ✅ NOUVEAU
   const [loading,      setLoading]      = useState(true);
   const [tab,          setTab]          = useState('tous');
   const [filterSearch, setFilterSearch] = useState('');
@@ -571,13 +626,21 @@ export default function ChefQualificationsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const r = await chefQualifAPI.getAllQualifications();
-      setPassages(r.data || []);
-    } catch { setPassages([]); }
+      const [r, imp] = await Promise.allSettled([
+        chefQualifAPI.getAllQualifications(),
+        certificatAuditeurAPI.getCertificatsDeMonPlant(), // ✅ NOUVEAU
+      ]);
+      setPassages(r.status   === 'fulfilled' ? (r.value.data   || []) : []);
+      setCertifsImportes(imp.status === 'fulfilled' ? (imp.value.data || []) : []); // ✅ NOUVEAU
+    } catch { setPassages([]); setCertifsImportes([]); }
     finally  { setLoading(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // ✅ NOUVEAU — liste combinée : passages via examen + certificats importés,
+  // affichés de façon uniforme dans les onglets Tous / Qualifiés / Historique.
+  const allPassages = [...passages, ...certifsImportes.map(mapCertifImporte)];
 
   const handleDecision = (valide) => {
     setNotification({
@@ -588,7 +651,7 @@ export default function ChefQualificationsPage() {
     setTimeout(() => setNotification(null), 4000);
   };
 
-  const filtered = passages.filter(p => {
+  const filtered = allPassages.filter(p => {
     if (tab==='en_cours')       { if (!STATUTS_EN_COURS.includes(p.statut)) return false; }
     if (tab==='certif_attente') { if (p.statutCertificat!=='EN_ATTENTE_CHEF') return false; }
     if (tab==='certifies')      { if (p.statut!=='CERTIFIE') return false; }
@@ -604,12 +667,12 @@ export default function ChefQualificationsPage() {
   });
 
   const counts = {
-    tous:          passages.length,
-    en_cours:      passages.filter(p => STATUTS_EN_COURS.includes(p.statut)).length,
-    certif_attente:passages.filter(p => p.statutCertificat==='EN_ATTENTE_CHEF').length,
-    certifies:     passages.filter(p => p.statut==='CERTIFIE').length,
-    bloques:       passages.filter(p => p.statut==='BLOQUE').length,
-    historique:    passages.filter(p => ['EN_ATTENTE_CHEF','VALIDE_CHEF','INVALIDE_CHEF'].includes(p.statutCertificat)).length,
+    tous:          allPassages.length,
+    en_cours:      allPassages.filter(p => STATUTS_EN_COURS.includes(p.statut)).length,
+    certif_attente:allPassages.filter(p => p.statutCertificat==='EN_ATTENTE_CHEF').length,
+    certifies:     allPassages.filter(p => p.statut==='CERTIFIE').length,
+    bloques:       allPassages.filter(p => p.statut==='BLOQUE').length,
+    historique:    allPassages.filter(p => ['EN_ATTENTE_CHEF','VALIDE_CHEF','INVALIDE_CHEF'].includes(p.statutCertificat)).length,
   };
 
   return (

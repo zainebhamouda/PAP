@@ -55,6 +55,10 @@ public class AuditResponse {
     private String  planificateurNom;
     private Integer planificateurId;   // ← AJOUTÉ : utile pour l'envoi de la demande
 
+    // ✅ NOUVEAU — Suivi (collègues du même plant suivant la réalisation de cet audit)
+    private boolean  suiviParMoi;      // le viewer connecté suit-il cet audit ?
+    private int      nombreSuiveurs;   // combien de collègues le suivent au total
+
     // ── RÉSULTATS QK ─────────────────────────────────────────
     private Integer nombreComposants;
     private Double  totalPoints;
@@ -174,6 +178,10 @@ public class AuditResponse {
         // ✅ NOUVEAU : planificateurId (expert qui a créé l'audit)
         r.planificateurId  = a.getPlanificateur() != null ? a.getPlanificateur().getId() : null;
 
+        // ✅ NOUVEAU : suivi (nombre de collègues qui suivent cet audit)
+        r.nombreSuiveurs = a.getSuiveurs() != null ? a.getSuiveurs().size() : 0;
+        r.suiviParMoi    = false; // renseigné par from(a, viewerId) quand le contexte le permet
+
         // Résultats QK
         r.nombreComposants = a.getNombreComposants();
         r.totalPoints      = a.getTotalPoints();
@@ -227,6 +235,20 @@ public class AuditResponse {
         return r;
     }
 
+    /**
+     * ✅ NOUVEAU — Variante qui renseigne en plus {@code suiviParMoi} en
+     * fonction de l'utilisateur qui consulte la liste (viewerId), utile
+     * pour l'onglet "Collègues (même plant)" / bouton "Suivre".
+     */
+    public static AuditResponse from(AuditProduit a, Integer viewerId) {
+        AuditResponse r = from(a);
+        if (viewerId != null && a.getSuiveurs() != null) {
+            r.suiviParMoi = a.getSuiveurs().stream()
+                    .anyMatch(u -> u.getId().equals(viewerId));
+        }
+        return r;
+    }
+
     // ═══════════════════════════════════════════════════════════
     // Getters & Setters
     // ═══════════════════════════════════════════════════════════
@@ -259,6 +281,10 @@ public class AuditResponse {
     public Integer   getAuditeurId()         { return auditeurId; }
     public String    getPlanificateurNom()   { return planificateurNom; }
     public Integer   getPlanificateurId()    { return planificateurId; }  // ← NOUVEAU getter
+    public boolean   isSuiviParMoi()          { return suiviParMoi; }
+    public void      setSuiviParMoi(boolean v){ this.suiviParMoi = v; }
+    public int       getNombreSuiveurs()      { return nombreSuiveurs; }
+    public void      setNombreSuiveurs(int v) { this.nombreSuiveurs = v; }
     public Integer   getNombreComposants()   { return nombreComposants; }
     public Double    getTotalPoints()        { return totalPoints; }
     public Double    getFacteur()            { return facteur; }

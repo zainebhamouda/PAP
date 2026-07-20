@@ -127,10 +127,20 @@ export const publicLandingAPI = {
 // ── AUDIT PRODUIT — Sprint 3 ─────────────────────────────────────
 export const auditProduitAPI = {
   // Mes audits (auditeur)
-  getMesAudits:    (planificationId) =>
-    api.get('/audit-produit/mes-audits', { params: planificationId ? { planificationId } : {} }),
+  getMesAudits:    (planificationId, projetId, serieId) =>
+    api.get('/audit-produit/mes-audits', { params: {
+      ...(planificationId ? { planificationId } : {}),
+      ...(projetId ? { projetId } : {}),
+      ...(serieId ? { serieId } : {}),
+    } }),
   getById:         (id)  => api.get(`/audit-produit/${id}`),
   demarrer:        (id)  => api.put(`/audit-produit/${id}/demarrer`),
+
+  // ✅ NOUVEAU — Délégation entre collègues du même plant
+  getAuditsCollegues: ()   => api.get('/audit-produit/audits-collegues-plant'),
+  getMesSuivis:       ()   => api.get('/audit-produit/mes-suivis'),
+  suivre:             (id) => api.put(`/audit-produit/${id}/suivre`),
+  neplusSuivre:       (id) => api.put(`/audit-produit/${id}/ne-plus-suivre`),
 
   // Annexes
   getAnnexes:      (id)                    => api.get(`/audit-produit/${id}/annexes`),
@@ -227,6 +237,31 @@ export const auditeurAPI = {
   dashboard: () => api.get('/auditeur/dashboard'),
     getAuditeursMonPlant: () => api.get('/auditeur/mon-plant/auditeurs'),
 
+};
+
+// ── ✅ NOUVEAU — CERTIFICATS AUDITEUR IMPORTÉS (déjà obtenus) ────────
+export const certificatAuditeurAPI = {
+  // Expert : importer un certificat pour un auditeur de son plant
+  importer: (auditeurId, dateObtention, fichier) => {
+    const fd = new FormData();
+    fd.append('auditeurId', auditeurId);
+    fd.append('dateObtention', dateObtention); // format ISO: 2026-07-20T10:00:00
+    if (fichier) fd.append('fichier', fichier);
+    // ⚠️ L'instance axios a un header par défaut 'Content-Type: application/json'
+    // (voir la déclaration de `api` en haut de ce fichier). Pour un envoi
+    // FormData, il faut explicitement neutraliser ce défaut (undefined) pour
+    // que le navigateur pose lui-même 'multipart/form-data; boundary=...' —
+    // sinon le serveur reçoit 'application/json' et rejette la requête
+    // (HttpMediaTypeNotSupportedException, endpoint déclaré consumes=multipart/form-data).
+    return api.post('/certificats-auditeur/importer', fd, {
+      headers: { 'Content-Type': undefined },
+    });
+  },
+  getCertificatsDeMonPlant: () => api.get('/certificats-auditeur/mon-plant'),
+  getAuditeursDeMonPlant:   () => api.get('/certificats-auditeur/auditeurs-plant'),
+  getAuditeursCertifiesParPlant: (plantId) => api.get(`/certificats-auditeur/auditeurs-certifies/${plantId}`),
+  getMesCertificats: () => api.get('/certificats-auditeur/mes-certificats'),
+  annuler: (id) => api.put(`/certificats-auditeur/${id}/annuler`),
 };
 
 // ── RESPONSABLE ───────────────────────────────────────────────────

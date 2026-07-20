@@ -10,7 +10,7 @@
  */
 import CreerReglePlateAuditeurModal from './CreerReglePlateAuditeurModal';
 import CreerExportAuditeurModal from './CreerExportAuditeurModal';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { auditProduitAPI, auditSpecialAPI, auditeurAPI } from '../../services/api';
 import { AuditDetailDrawer } from './AuditReportSystem';
@@ -34,6 +34,110 @@ const STORAGE_NEW='auditeur_nouveaux_ids', STORAGE_KNOWN='auditeur_known_ids', S
 const STORAGE_BANNER = 'auditeur_banner_dismissed_session';
 
 const fmt = d => { if(!d) return '—'; try { return new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}); } catch { return d; } };
+const fmtDateTime = d => { if(!d) return '—'; try { return new Intl.DateTimeFormat('fr-FR',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d)); } catch { return d; } };
+
+// ✅ NOUVEAU — Suivi de la réalisation (repris du modèle utilisé côté expert)
+const getQkColorFromValue = value => {
+  const qk = value == null ? null : Number(value);
+  if (qk == null || Number.isNaN(qk)) return null;
+  if (qk === 0) return 'VERT';
+  if (qk <= 0.5) return 'ORANGE';
+  if (qk <= 1) return 'ROSE';
+  return 'ROUGE';
+};
+const getQkTheme = qkColor => {
+  switch (qkColor) {
+    case 'VERT':   return { accent:T.success, soft:T.successBg, border:T.successBd };
+    case 'ORANGE': return { accent:T.warn,    soft:T.warnBg,    border:T.warnBd };
+    case 'ROSE':   return { accent:'#E11D48', soft:'#FFF1F2',   border:'#F9A8D4' };
+    case 'ROUGE':  return { accent:T.danger,  soft:T.dangerBg,  border:T.dangerBd };
+    default:       return { accent:T.g500,    soft:T.g100,      border:T.g200 };
+  }
+};
+const getSuiviMetaProduit = (audit, details = {}) => {
+  if (!audit) return {};
+  const qk = audit.valeurQK;
+  const qkColor = getQkColorFromValue(qk) || audit.couleurQK || null;
+  const ficheRequired = qk != null && qk > 0;
+  const pdcaRequired  = qk != null && qk > 0.5;
+  const ficheMeta = details?.ficheMeta || {};
+  const pdcaMeta  = details?.pdcaMeta  || {};
+  const ficheValidee  = ficheMeta.valide === true || ficheMeta.statut === 'VALIDEE';
+  const ficheSentBool = !!ficheMeta.dateDernierEnvoi;
+  const pdcaValidee   = pdcaMeta.statut === 'RESOLU' || pdcaMeta.statut === 'FERME' || pdcaMeta.valide === true || pdcaMeta.statut === 'VALIDE' || pdcaMeta.statut === 'VALIDEE';
+  const pdcaSentBool  = !!(pdcaMeta.dateDernierEnvoi || pdcaMeta.dateEnvoi || pdcaMeta.sentAt);
+  const rapportGenere = audit.rapportGenere || false;
+  const canGenerate    = !rapportGenere && (!ficheRequired || ficheValidee) && (!pdcaRequired || pdcaValidee);
+  return {
+    qkColor, ficheRequired, pdcaRequired, ficheValidee, pdcaValidee,
+    ficheSent: ficheSentBool, pdcaSent: pdcaSentBool, rapportGenere, canGenerate,
+    fiche: {
+      sentText: ficheMeta.dateDernierEnvoi ? fmtDateTime(ficheMeta.dateDernierEnvoi) : '—',
+      validatedText: ficheMeta.dateValidation ? fmtDateTime(ficheMeta.dateValidation) : '—',
+      statusLabel: ficheValidee ? 'Validée' : ficheSentBool ? 'Envoyée' : ficheRequired ? 'À créer' : 'Non requis',
+    },
+    pdca: {
+      sentText: (pdcaMeta.dateDernierEnvoi || pdcaMeta.dateEnvoi) ? fmtDateTime(pdcaMeta.dateDernierEnvoi || pdcaMeta.dateEnvoi) : '—',
+      validatedText: (pdcaMeta.dateCloture || pdcaMeta.dateResolution) ? fmtDateTime(pdcaMeta.dateCloture || pdcaMeta.dateResolution) : '—',
+      statusLabel: pdcaValidee ? 'Validé' : pdcaSentBool ? 'Envoyé' : pdcaRequired ? 'À créer' : 'Non requis',
+    },
+  };
+};
+const computeStepsSuiviProduit = (audit, details = {}) => {
+  if (!audit) return [];
+  const meta    = getSuiviMetaProduit(audit, details);
+  const qkColor = getQkColorFromValue(audit?.valeurQK) || meta.qkColor || audit?.couleurQK || null;
+  const ficheReq = ['ORANGE','ROSE','ROUGE'].includes(qkColor);
+  const pdcaReq  = ['ROSE','ROUGE'].includes(qkColor);
+  const annexesList = details?.annexes || [];
+  const hasRapportImporte = !!(audit?.rapportUrl || audit?.rapportFichierNom || audit?.rapportImporte);
+  const hasAnnexes = annexesList.length > 0;
+  const allAnnexesDone = hasAnnexes && annexesList.every(a => a.importe || a.formValide);
+  const workflow = hasRapportImporte ? 'RAPPORT' : hasAnnexes ? 'ANNEXES' : null;
+
+  const steps = [{ key:'start', label:'Commencer', status:'Fait', done:true }];
+
+  if (workflow === 'RAPPORT') {
+    steps.push({ key:'rapport', label:'Import rapport', status:hasRapportImporte ? 'Importé' : 'À importer', done:hasRapportImporte });
+  } else if (workflow === 'ANNEXES') {
+    const ok = annexesList.filter(a => a.importe || a.formValide).length;
+    steps.push({ key:'annexes', label:'Annexes', status:`${ok}/${annexesList.length}`, done:allAnnexesDone });
+  } else {
+    steps.push({ key:'docs', label:'Documents', status:'Non commencé', done:false });
+  }
+
+  if (workflow === 'RAPPORT') {
+    const qkLabel = { VERT:'Conforme', ORANGE:'Non-conf. mineure', ROSE:'Action corrective', ROUGE:'Alerte critique' };
+    steps.push({ key:'qk', label:'Saisie QK', status:qkColor != null ? (qkLabel[qkColor] || 'Saisi') : 'À saisir', done:qkColor != null });
+  }
+
+  if (audit?.valeurQK != null && audit.valeurQK > 0.5 && ficheReq && pdcaReq) {
+    steps.push({ key:'fiche-pdca', label:'Fiche + PDCA', status:meta.ficheValidee && meta.pdcaValidee ? 'Validés' : (meta.ficheSent || meta.pdcaSent) ? 'En cours' : 'À créer', done:meta.ficheValidee && meta.pdcaValidee });
+  } else {
+    if (ficheReq) steps.push({ key:'fiche', label:'Fiche', status:meta.ficheValidee ? 'Validée' : meta.ficheSent ? 'Envoyée' : 'À créer', done:meta.ficheValidee });
+    if (pdcaReq)  steps.push({ key:'pdca',  label:'PDCA',  status:meta.pdcaValidee  ? 'Validé'  : meta.pdcaSent  ? 'Envoyé'  : 'À créer', done:meta.pdcaValidee });
+  }
+
+  steps.push({ key:'gen', label:'Rapport', status:meta.rapportGenere ? 'Généré' : meta.canGenerate ? 'À générer' : 'En attente', done:meta.rapportGenere });
+  steps.push({ key:'fin', label:'Terminé', status:audit?.statut === 'TERMINE' ? 'Clôturé' : 'À finaliser', done:audit?.statut === 'TERMINE' });
+  return steps;
+};
+const fetchSuiviDataProduit = async (auditId) => {
+  const h = apiH();
+  const safeGet = async url => { try { const r = await fetch(url, { headers:h }); return r.ok ? r.json() : null; } catch { return null; } };
+  const [auditFrais, ficheData, pdcaData, annexesData] = await Promise.all([
+    safeGet(`http://localhost:8080/api/audit-produit/${auditId}`),
+    safeGet(`http://localhost:8080/api/audit-produit/${auditId}/fiche-reparation`),
+    safeGet(`http://localhost:8080/api/audit-produit/${auditId}/pdca`),
+    safeGet(`http://localhost:8080/api/audit-produit/${auditId}/annexes`),
+  ]);
+  return {
+    audit: auditFrais || null,
+    ficheMeta: Array.isArray(ficheData) ? ficheData[0] || null : ficheData,
+    pdcaMeta: Array.isArray(pdcaData) ? pdcaData[0] || null : pdcaData,
+    annexes: Array.isArray(annexesData) ? annexesData : (annexesData?.content || []),
+  };
+};
 
 const isOverdue = a => {
   if (!a.deadline) return false;
@@ -130,8 +234,170 @@ function StatCard({ title, count, desc, icon, color, bg, onClick, active, badge 
   );
 }
 
+/* ─── ✅ NOUVEAU — Barre d'étapes du suivi (reprise du modèle expert) ─── */
+function SuiviStepBar({ steps, pct, theme }) {
+  return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'0.8rem', padding:'.85rem 0 .8rem', flexWrap:'nowrap', overflowX:'auto' }}>
+      {steps.map((step, index) => {
+        const isDone   = step.done;
+        const isActive = !isDone && (index === 0 || steps[index-1]?.done);
+        return (
+          <div key={step.key||index} style={{ display:'flex', alignItems:'center', gap:7, flexShrink:0 }}>
+            {index > 0 && <div style={{ width:18, height:1.5, background:isDone ? `${theme.accent}66` : 'rgba(255,255,255,.18)', flexShrink:0, borderRadius:99 }}/>}
+            <div style={{ width:32, height:32, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:800, fontSize:12, flexShrink:0, background:isDone?theme.accent:isActive?theme.soft:'rgba(152,152,152,.4)', color:isDone?'#fff':isActive?theme.accent:'rgba(255,255,255,.4)', border:isDone?`2px solid ${theme.accent}`:isActive?`2px solid ${theme.accent}`:'2px solid rgba(255,255,255,.18)', boxShadow:isDone?`0 0 0 3px ${theme.accent}33,0 2px 8px ${theme.accent}44`:isActive?`0 2px 10px ${theme.accent}22`:'none', transition:'all .3s' }}>
+              {isDone ? '✓' : index + 1}
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:1 }}>
+              <span style={{ fontSize:'.74rem', fontWeight:isDone||isActive?700:500, color:isDone?'rgba(255,255,255,.95)':isActive?'#fff':'rgba(255,255,255,.38)', whiteSpace:'nowrap' }}>{step.label}</span>
+              <span style={{ fontSize:'.62rem', color:isDone?'rgba(255,255,255,.78)':isActive?'rgba(255,255,255,.7)':'rgba(255,255,255,.28)', whiteSpace:'nowrap' }}>{step.status}</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ─── ✅ NOUVEAU — Petite ligne info (fiche/pdca) ─── */
+function InfoRowSuivi({ label, value, color }) {
+  return (
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:'.73rem', padding:'6px 10px', borderRadius:8, background:'#EEF2F8', marginBottom:6 }}>
+      <span style={{ color:T.g500 }}>{label}</span>
+      <strong style={{ color: color || T.g700 }}>{value || '—'}</strong>
+    </div>
+  );
+}
+
+/* ─── ✅ NOUVEAU — Fenêtre "Suivi" : à quelle étape en est le collègue
+   (lecture seule — aucune action de modification n'est possible ici) ─── */
+function SuiviCollegueModal({ audit, onClose, onToggleSuivre, suiviLoading }) {
+  const [details, setDetails] = useState({ loading:true, error:'', ficheMeta:null, pdcaMeta:null, annexes:[] });
+  const [live,    setLive]    = useState(audit);
+  const pollRef = useRef(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => fetchSuiviDataProduit(audit.id).then(data => {
+      if (cancelled) return;
+      if (data.audit) setLive(prev => ({ ...prev, ...data.audit }));
+      setDetails({ loading:false, error:'', ficheMeta:data.ficheMeta, pdcaMeta:data.pdcaMeta, annexes:data.annexes||[] });
+    }).catch(() => { if (!cancelled) setDetails(prev => ({ ...prev, loading:false, error:'Erreur de chargement' })); });
+    load();
+    pollRef.current = setInterval(load, 30000);
+    return () => { cancelled = true; if (pollRef.current) clearInterval(pollRef.current); };
+  }, [audit.id]);
+
+  const meta  = getSuiviMetaProduit(live, details);
+  const steps = computeStepsSuiviProduit(live, details);
+  const pct   = steps.length === 0 ? 0 : Math.round(steps.filter(s=>s.done).length / steps.length * 100);
+  const theme = getQkTheme(meta.qkColor);
+
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(3,12,28,.55)', zIndex:1200, display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{ 
+        width:'100%', 
+        maxWidth:960,   // <--- MODIFIÉ : 760 → 960
+        maxHeight:'90vh', 
+        overflow:'auto', 
+        background:'#fff', 
+        borderRadius:22, 
+        boxShadow:'0 28px 80px rgba(0,40,85,.28)' 
+      }}>
+
+        {/* Header */}
+        <div style={{ background:`linear-gradient(135deg,${T.navy},#132A52)`, color:'#fff', borderRadius:'22px 22px 0 0', padding:'18px 24px 0' }}>
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16, marginBottom:18 }}>
+            <div>
+              <div style={{ fontSize:'.67rem', fontWeight:800, textTransform:'uppercase', letterSpacing:'.14em', opacity:.65, marginBottom:5 }}>
+                Suivi — Audit d'un collègue 
+              </div>
+              <div style={{ fontWeight:900, fontSize:'1.12rem', marginBottom:3 }}>{live?.reference || `AUD-${live?.id}`}</div>
+              <div style={{ fontSize:'.84rem', opacity:.82 }}>
+                {live?.plantNom||'—'} · {live?.serieNom||'—'} · réalisé par {live?.auditeurNom||'—'}
+              </div>
+            </div>
+            <button onClick={onClose} style={{ border:'1px solid rgba(255,255,255,.25)', background:'rgba(255,255,255,.1)', color:'#fff', width:36, height:36, borderRadius:10, cursor:'pointer', fontWeight:800, fontSize:'1rem', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+          </div>
+
+          <SuiviStepBar steps={steps} pct={pct} theme={theme} />
+
+          <div style={{ height:3, background:'rgba(255,255,255,.18)', margin:'0 -24px', overflow:'hidden' }}>
+            <div style={{ height:'100%', width:`${pct}%`, background:`linear-gradient(90deg,${theme.accent}99,${theme.accent})`, transition:'width .5s ease' }}/>
+          </div>
+        </div>
+
+        {/* Corps */}
+        {details.loading ? (
+          <div style={{ padding:'20px 24px', color:T.g400, fontSize:'.82rem' }}>Chargement…</div>
+        ) : (
+          <div style={{ padding:'20px 24px', display:'grid', gap:16, background:'#F5F6F8' }}>
+            <div style={{ 
+              display:'grid', 
+              gridTemplateColumns:'minmax(200px,250px) 1fr',   // <--- MODIFIÉ : colonne gauche plus large
+              gap:16, 
+              alignItems:'start' 
+            }}>
+
+              {/* Colonne gauche : % + QK + statut */}
+              <div style={{ background:`linear-gradient(180deg,${theme.soft} 0%,#fff 100%)`, border:`1.5px solid ${theme.border}`, borderRadius:18, padding:'20px 16px', display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
+                <svg width="130" height="80" viewBox="0 0 160 92">
+                  <g transform="translate(20,10)">
+                    <circle cx="60" cy="36" r="36" fill="none" stroke="#E6EAF2" strokeWidth="8"/>
+                    <circle cx="60" cy="36" r="36" fill="none" stroke={theme.accent} strokeWidth="8"
+                      strokeDasharray={`${Math.round(2*Math.PI*36*pct/100)} ${2*Math.PI*36}`}
+                      strokeLinecap="round" transform="rotate(-90 60 36)"/>
+                    <text x="60" y="42" textAnchor="middle" fontSize="14" fontWeight="800" fill={T.navy}>{pct}%</text>
+                  </g>
+                </svg>
+                <div style={{ fontSize:'.73rem', color:T.g500 }}>{steps.filter(s=>s.done).length}/{steps.length} étapes validées</div>
+                <div style={{ width:'100%', height:1, background:T.g100, margin:'4px 0' }}/>
+                <div style={{ width:'100%', background:live?.valeurQK!=null?theme.soft:'#E5E9F0', borderRadius:12, padding:'10px 14px', textAlign:'center', border:`1.5px solid ${live?.valeurQK!=null?theme.border:'#B0BAC8'}` }}>
+                  <div style={{ fontSize:'.65rem', fontWeight:800, color:T.g500, textTransform:'uppercase', letterSpacing:'.08em', marginBottom:4 }}>Valeur QK</div>
+                  <div style={{ fontSize:'1.5rem', fontWeight:900, color:live?.valeurQK!=null?theme.accent:T.g400, lineHeight:1 }}>{live?.valeurQK??'—'}</div>
+                </div>
+                <div style={{ width:'100%', display:'flex', justifyContent:'space-between', fontSize:'.72rem', marginTop:2, padding:'5px 8px', background:'#D6DFEE', borderRadius:8 }}>
+                  <span style={{ color:T.g500 }}>Statut</span>
+                  <strong style={{ color:T.navy }}>{STATUT_CFG[live?.statut]?.label || live?.statut || '—'}</strong>
+                </div>
+              </div>
+
+              {/* Colonne droite : fiche / pdca si requis */}
+              <div style={{ display:'grid', gap:12 }}>
+                {meta.ficheRequired && (
+                  <div style={{ background:'#fff', borderRadius:14, padding:'12px 14px', boxShadow:'0 4px 14px rgba(0,40,85,.08)', border:'1px solid #DBEAFE', borderTop:`4px solid ${T.blue}` }}>
+                    <div style={{ fontWeight:800, color:T.navy, fontSize:'.85rem', marginBottom:8 }}>Fiche de réparation</div>
+                    <InfoRowSuivi label="Envoi" value={meta.fiche.sentText} />
+                    <InfoRowSuivi label="Validation" value={meta.fiche.validatedText} color={meta.ficheValidee ? T.success : T.g500} />
+                    <div style={{ marginTop:4, padding:'5px 10px', borderRadius:8, textAlign:'center', fontSize:'.72rem', fontWeight:700, background:meta.ficheValidee?T.successBg:'#DBEAFE', color:meta.ficheValidee?T.success:T.blue }}>{meta.fiche.statusLabel}</div>
+                  </div>
+                )}
+                {meta.pdcaRequired && (
+                  <div style={{ background:'#fff', borderRadius:14, padding:'12px 14px', boxShadow:'0 4px 14px rgba(0,40,85,.08)', border:'1px solid #DBEAFE', borderTop:`4px solid ${T.blue}` }}>
+                    <div style={{ fontWeight:800, color:T.navy, fontSize:'.85rem', marginBottom:8 }}>Plan d'action PDCA</div>
+                    <InfoRowSuivi label="Envoi" value={meta.pdca.sentText} />
+                    <InfoRowSuivi label="Validation" value={meta.pdca.validatedText} color={meta.pdcaValidee ? T.success : T.g500} />
+                    <div style={{ marginTop:4, padding:'5px 10px', borderRadius:8, textAlign:'center', fontSize:'.72rem', fontWeight:700, background:meta.pdcaValidee?T.successBg:'#DBEAFE', color:meta.pdcaValidee?T.success:T.blue }}>{meta.pdca.statusLabel}</div>
+                  </div>
+                )}
+                {!meta.ficheRequired && !meta.pdcaRequired && (
+                  <div style={{ background:'#fff', borderRadius:14, padding:'16px', border:`1px solid ${T.g200}`, textAlign:'center', color:T.g400, fontSize:'.8rem' }}>
+                    Aucune fiche ni PDCA requis pour cet audit à ce stade.
+                  </div>
+                )}
+              </div>
+            </div>
+
+           
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Audit Produit Card ─── */
-function ProduitCard({ audit, nouveau, onView, onViewDetail, onDelete, onDemandeTemps, onModifier }) {
+function ProduitCard({ audit, nouveau, onView, onViewDetail, onDelete, onDemandeTemps, onModifier, isCollegue, onToggleSuivre, suiviLoading }) {
   const [hov, setHov] = useState(false);
   const retard = isEnRetard(audit);
   const qkValue = Number(audit.valeurQK);
@@ -215,13 +481,23 @@ function ProduitCard({ audit, nouveau, onView, onViewDetail, onDelete, onDemande
           { l:'Date prévue', v: fmt(audit.datePrevue) },
           { l:'Nature',      v: audit.natureAudit==='DESTRUCTIF'?'Destructif':'Non-destructif' },
           { l: isTermine ? 'Date de fin' : 'Deadline', v: isTermine ? fmt(dateFinAudit || audit.datePrevue) : fmt(audit.deadline) },
-        ].map(x => (
+          isCollegue && { l:'Auditeur', v: audit.auditeurNom || '—' },
+        ].filter(Boolean).map(x => (
           <div key={x.l} style={{ background:T.g50, borderRadius:8, padding:'6px 9px' }}>
             <div style={{ fontSize:'.6rem', color:T.g400, fontWeight:700, textTransform:'uppercase', letterSpacing:'.05em', marginBottom:2 }}>{x.l}</div>
             <div style={{ fontSize:'.75rem', color: x.l==='Deadline' && retard && !isTermine ? T.danger : T.g700, fontWeight: x.l==='Deadline' && retard ? 800 : 600 }}>{x.v}</div>
           </div>
         ))}
       </div>
+
+      {/* ✅ NOUVEAU — Badge "suivi" : quand des collègues suivent MON audit */}
+      {!isCollegue && audit.nombreSuiveurs > 0 && (
+        <div style={{ background:T.purpleBg, border:`1px solid ${T.purpleBd}`, borderRadius:8, padding:'5px 10px', marginBottom:10, display:'flex', alignItems:'center', gap:7 }}>
+          <span style={{ fontSize:'.72rem', fontWeight:700, color:T.purple }}>
+             Suivi par {audit.nombreSuiveurs} collègue{audit.nombreSuiveurs > 1 ? 's' : ''}
+          </span>
+        </div>
+      )}
 
       {/* Badge QK (shown on started or finished audits) */}
       {qk && (audit.started || isTermine) && (
@@ -238,7 +514,24 @@ function ProduitCard({ audit, nouveau, onView, onViewDetail, onDelete, onDemande
       {/* ── Actions ── */}
       <div style={{ display:'flex', gap:8, marginTop:'auto', paddingTop:8, borderTop:`1px solid ${T.g100}` }}>
 
-        {isTermine ? (
+        {isCollegue ? (
+          /* ✅ NOUVEAU — Audit d'un collègue du même plant : ouvre la fenêtre
+             de suivi (étapes de réalisation), en lecture seule. */
+          <button onClick={() => onToggleSuivre?.(audit)} disabled={suiviLoading}
+            style={{
+              flex:1, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:6,
+              padding:'8px', borderRadius:9,
+              border: audit.suiviParMoi ? `1.5px solid ${T.purple}` : 'none',
+              background: suiviLoading ? T.g300 : (audit.suiviParMoi ? '#fff' : 'linear-gradient(135deg,#6D28D9,#7C3AED)'),
+              color: audit.suiviParMoi ? T.purple : '#fff',
+              fontWeight:700, fontSize:'.78rem',
+              cursor: suiviLoading ? 'default' : 'pointer', fontFamily:"'Inter',sans-serif",
+              boxShadow: (suiviLoading || audit.suiviParMoi) ? 'none' : '0 6px 16px rgba(124,58,237,.30)',
+            }}>
+            {suiviLoading ? '…' : (audit.suiviParMoi ? ' Voir le suivi' : ' Suivre')}
+          </button>
+
+        ) : isTermine ? (
           /* Terminé : Aperçu + Carte d'identité */
           <>
             <button onClick={() => onView(audit, true)}
@@ -660,25 +953,72 @@ function SpecialAuditDetailModal({ detail, open, onClose }) {
     </div>
   );
 }
-
 function ModifierAuditModal({ audit, open, onClose, onSuccess }) {
   const [deadline, setDeadline] = useState('');
   const [observations, setObservations] = useState('');
   const [auditeurId, setAuditeurId] = useState('');
+  const [serieId, setSerieId] = useState('');       // valeur sélectionnée (toujours en string)
+  const [series, setSeries] = useState([]);          // séries actives du projet + série actuelle si besoin
+  const [seriesLoading, setSeriesLoading] = useState(false);
   const [collegues, setCollegues] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (audit) {
-      setDeadline(audit.deadline || '');
-      setObservations(audit.observations || '');
-      setAuditeurId(audit.auditeurId || '');
-      setError('');
-      auditeurAPI.getAuditeursMonPlant()
-        .then(r => setCollegues(r.data || []))
-        .catch(() => setCollegues([]));
+    if (!audit) return;
+
+    setDeadline(audit.deadline || '');
+    setObservations(audit.observations || '');
+    setAuditeurId(audit.auditeurId != null ? String(audit.auditeurId) : '');
+    setError('');
+
+    // ✅ Toujours en string : les <option value="..."> HTML sont des strings,
+    // donc si audit.serieId est un number, la comparaison échoue silencieusement
+    // et le navigateur affiche la 1ère option de la liste au lieu de la bonne série.
+    const currentSerieId  = audit.serieId != null ? String(audit.serieId) : '';
+    const currentSerieNom = audit.serieNom || '';
+    setSerieId(currentSerieId);
+
+    auditeurAPI.getAuditeursMonPlant()
+      .then(r => setCollegues(r.data || []))
+      .catch(() => setCollegues([]));
+
+    if (!audit.projetId) {
+      // Pas de projet connu → on affiche juste la série actuelle, non modifiable
+      setSeries(currentSerieId ? [{ id: currentSerieId, nom: currentSerieNom, active: true }] : []);
+      return;
     }
+
+    setSeriesLoading(true);
+    // ✅ Uniquement les séries ACTIVES du projet de cet audit
+    fetch(`http://localhost:8080/api/auditeur/projets/${audit.projetId}/series-actives`, { headers: apiH() })
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        let list = (Array.isArray(data) ? data : []).map(s => ({
+          id: String(s.id),
+          nom: s.nom,
+          active: true,
+        }));
+
+        // ✅ Si la série actuelle de l'audit n'est pas dans les séries actives
+        // (ex: elle a été désactivée depuis), on l'ajoute quand même en tête
+        // pour qu'elle reste affichée et sélectionnée par défaut — comme sur
+        // la carte de l'audit.
+        const hasCurrentSerie = currentSerieId && list.some(s => s.id === currentSerieId);
+        if (!hasCurrentSerie && currentSerieId) {
+          list = [
+            { id: currentSerieId, nom: currentSerieNom || `Série #${currentSerieId}`, active: false },
+            ...list,
+          ];
+        }
+
+        setSeries(list);
+      })
+      .catch(() => {
+        // En cas d'échec réseau, on garde au moins la série actuelle visible
+        setSeries(currentSerieId ? [{ id: currentSerieId, nom: currentSerieNom, active: true }] : []);
+      })
+      .finally(() => setSeriesLoading(false));
   }, [audit]);
 
   if (!open || !audit) return null;
@@ -687,10 +1027,15 @@ function ModifierAuditModal({ audit, open, onClose, onSuccess }) {
     setSaving(true);
     setError('');
     try {
+      const currentSerieId = audit.serieId != null ? String(audit.serieId) : '';
+      const serieChanged   = serieId && serieId !== currentSerieId;
+
       await auditProduitAPI.modifierParAuditeur(audit.id, {
         deadline: deadline || null,
         observations: observations || null,
         auditeurId: auditeurId || null,
+        // ✅ N'envoie serieId que si l'auditeur a réellement changé la valeur
+        serieId: serieChanged ? serieId : null,
       });
       onSuccess();
     } catch (e) {
@@ -718,6 +1063,37 @@ function ModifierAuditModal({ audit, open, onClose, onSuccess }) {
         <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)}
           style={{ width:'100%', height:38, borderRadius:9, border:`1.5px solid ${T.g300}`, padding:'0 10px', marginBottom:14, boxSizing:'border-box' }}/>
 
+        {/* ✅ Série — valeur par défaut = série actuelle de l'audit,
+            options = séries ACTIVES du projet (+ série actuelle si elle-même non active) */}
+        <label style={{ display:'block', fontSize:'.72rem', fontWeight:700, color:T.g500, marginBottom:4, textTransform:'uppercase' }}>
+          Série {seriesLoading && <span style={{ fontWeight:400, textTransform:'none', color:T.g400 }}>(chargement…)</span>}
+        </label>
+        <select
+          value={serieId}
+          onChange={e => setSerieId(e.target.value)}
+          disabled={seriesLoading || series.length === 0}
+          style={{
+            width:'100%', height:38, borderRadius:9, border:`1.5px solid ${T.g300}`,
+            padding:'0 10px', marginBottom:4, boxSizing:'border-box', background:'#fff',
+            opacity: (seriesLoading || series.length === 0) ? .6 : 1,
+          }}
+        >
+          {series.length === 0 && !seriesLoading && (
+            <option value="">{audit.serieNom || 'Aucune série disponible'}</option>
+          )}
+          {series.map(s => (
+            <option key={s.id} value={s.id}>
+              {s.nom}{s.active === false ? ' (série actuelle — non active)' : ''}
+            </option>
+          ))}
+        </select>
+        {series.length > 1 && (
+          <div style={{ fontSize:'.68rem', color:T.g400, marginBottom:14 }}>
+            Vous pouvez choisir une autre série active de ce projet.
+          </div>
+        )}
+        {series.length <= 1 && <div style={{ marginBottom:14 }} />}
+
         <label style={{ display:'block', fontSize:'.72rem', fontWeight:700, color:T.g500, marginBottom:4, textTransform:'uppercase' }}>
           Observations
         </label>
@@ -731,7 +1107,7 @@ function ModifierAuditModal({ audit, open, onClose, onSuccess }) {
           style={{ width:'100%', height:38, borderRadius:9, border:`1.5px solid ${T.g300}`, padding:'0 10px', marginBottom:16, boxSizing:'border-box', background:'#fff' }}>
           <option value="">— Ne pas changer —</option>
           {collegues.map(c => (
-            <option key={c.id} value={c.id}>
+            <option key={c.id} value={String(c.id)}>
               {c.prenom} {c.nom} ({c.matricule})
             </option>
           ))}
@@ -750,7 +1126,6 @@ function ModifierAuditModal({ audit, open, onClose, onSuccess }) {
     </div>
   );
 }
-
 /* ─── Composant principal ─── */
 export default function AuditeurAuditsPage() {
   const navigate = useNavigate();
@@ -763,6 +1138,13 @@ export default function AuditeurAuditsPage() {
   const [planifs,         setPlanifs]         = useState([]);
   const [filterPlanif,    setFilterPlanif]    = useState(() => searchParams.get('planificationId') || '');
   const [filterStatut, setFilterStatut] = useState('PLANIFIE');
+  // ✅ NOUVEAU — filtres Projet / Série (utile pour anticiper les séries d'activation à venir)
+  const [filterProjet,    setFilterProjet]    = useState('');
+  const [filterSerie,     setFilterSerie]     = useState('');
+  // ✅ NOUVEAU — audits encore planifiés des collègues du même plant (délégation)
+  const [auditsCollegues, setAuditsCollegues] = useState([]);
+  const [suiviLoadingId,  setSuiviLoadingId]  = useState(null);
+  const [suiviModalAudit, setSuiviModalAudit] = useState(null); // ✅ NOUVEAU — audit affiché dans la fenêtre de suivi
   const [loading,         setLoading]         = useState(true);
   const [nouveauxIds,     setNouveauxIds]     = useState(new Set());
   const [bannerDismissed, setBannerDismissed] = useState(() => !!sessionStorage.getItem(STORAGE_BANNER));
@@ -809,11 +1191,12 @@ export default function AuditeurAuditsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [ar, pr, rr, er] = await Promise.all([
+      const [ar, pr, rr, er, cr] = await Promise.all([
         fetch(`http://localhost:8080/api/audit-produit/mes-audits${filterPlanif ? `?planificationId=${filterPlanif}` : ''}`, { headers: apiH() }),
         fetch('http://localhost:8080/api/planification', { headers: apiH() }),
         auditSpecialAPI.mesAuditsReglePlates().catch(() => ({ data: [] })),
         auditSpecialAPI.mesAuditsExport().catch(() => ({ data: [] })),
+        auditProduitAPI.getAuditsCollegues().catch(() => ({ data: [] })),
       ]);
       const audits = await ar.json(); const planif = await pr.json();
       const list = Array.isArray(audits) ? audits : [];
@@ -833,6 +1216,7 @@ export default function AuditeurAuditsPage() {
       setAuditsProduit(list); setPlanifs(Array.isArray(planif) ? planif : []);
       setAuditsRegle(Array.isArray(rr.data) ? rr.data : []);
       setAuditsExport(Array.isArray(er.data) ? er.data : []);
+      setAuditsCollegues(Array.isArray(cr.data) ? cr.data : []);
     } catch(e) { console.error(e); }
     setLoading(false);
   }, [filterPlanif]);
@@ -911,6 +1295,29 @@ export default function AuditeurAuditsPage() {
     setShowModifModal(true);
   }, []);
 
+  // ✅ NOUVEAU — Ouvre la fenêtre de suivi (étapes de réalisation) d'un audit d'un collègue
+  const handleOpenSuivi = useCallback((audit) => {
+    setSuiviModalAudit(audit);
+  }, []);
+
+  // ✅ NOUVEAU — Suivre / ne plus suivre la réalisation d'un audit d'un collègue du même plant
+  // (appelé depuis la fenêtre de suivi)
+  const handleToggleSuivre = useCallback(async (audit) => {
+    setSuiviLoadingId(audit.id);
+    try {
+      if (audit.suiviParMoi) {
+        await auditProduitAPI.neplusSuivre(audit.id);
+      } else {
+        await auditProduitAPI.suivre(audit.id);
+      }
+      await load();
+    } catch (e) {
+      alert(e?.response?.data?.message || e.message || 'Impossible de mettre à jour le suivi.');
+    } finally {
+      setSuiviLoadingId(null);
+    }
+  }, [load]);
+
   const handleDemandeTemps = useCallback((audit) => {
     setDemandeAudit(audit);
     setShowDemande(true);
@@ -935,10 +1342,27 @@ export default function AuditeurAuditsPage() {
   const nvRegle   = auditsRegle.filter(a => a.statut === 'PLANIFIE').length;
   const nbRetard  = auditsProduit.filter(a => isEnRetard(a) && a.statut !== 'TERMINE').length;
 
-  const filtAudits = auditsProduit.filter(a => {
-    const mSt  = filterStatut === 'TOUS' || a.statut === filterStatut || (filterStatut === 'EN_RETARD' && isEnRetard(a));
+  // ✅ NOUVEAU — quand "Collègues (même plant)" est sélectionné, on affiche
+  // les audits restants des collègues au lieu de ses propres audits.
+  const isCollegueView = filterStatut === 'COLLEGUES';
+  const produitSourceList = isCollegueView ? auditsCollegues : auditsProduit;
+
+  // ✅ NOUVEAU — options de filtre Projet / Série, dérivées des audits déjà
+  // chargés (pas besoin d'appel API supplémentaire). Utile pour retrouver
+  // rapidement les audits liés à une série dont l'activation approche.
+  const projetOptions = [...new Map(
+    auditsProduit.filter(a => a.projetId != null).map(a => [a.projetId, a.projetNom || `Projet #${a.projetId}`])
+  ).entries()].sort((a, b) => String(a[1]).localeCompare(String(b[1])));
+  const serieOptions = [...new Map(
+    auditsProduit.filter(a => a.serieId != null).map(a => [a.serieId, a.serieNom || `Série #${a.serieId}`])
+  ).entries()].sort((a, b) => String(a[1]).localeCompare(String(b[1])));
+
+  const filtAudits = produitSourceList.filter(a => {
+    const mSt  = isCollegueView || filterStatut === 'TOUS' || a.statut === filterStatut || (filterStatut === 'EN_RETARD' && isEnRetard(a));
     const mTxt = !search || [a.reference, a.serieNom, a.projetNom].some(v => (v||'').toLowerCase().includes(search.toLowerCase()));
-    return mSt && mTxt;
+    const mProjet = !filterProjet || String(a.projetId) === String(filterProjet);
+    const mSerie  = !filterSerie  || String(a.serieId)  === String(filterSerie);
+    return mSt && mTxt && mProjet && mSerie;
   });
   const filtRegle  = auditsRegle.filter(a => !search || [a.reference, a.plantNom].some(v => (v||'').toLowerCase().includes(search.toLowerCase())));
   const filtExport = auditsExport.filter(a => !search || [a.reference, a.zoneExpedition, a.semaineExport].some(v => (v||'').toLowerCase().includes(search.toLowerCase())));
@@ -960,7 +1384,7 @@ export default function AuditeurAuditsPage() {
 
   useEffect(() => {
     setProduitPage(1);
-  }, [activeCard, filterPlanif, filterStatut, search]);
+  }, [activeCard, filterPlanif, filterStatut, filterProjet, filterSerie, search]);
 
   useEffect(() => {
     setProduitPage(prev => Math.min(prev, produitTotalPages));
@@ -1065,7 +1489,23 @@ export default function AuditeurAuditsPage() {
               style={{ border:`1px solid ${T.g300}`, borderRadius:8, padding:'7px 10px', fontSize:'.8rem', fontFamily:'inherit', color:T.g700, background:'#fff', cursor:'pointer' }}>
               <option value="TOUS">Tous les statuts</option>
               {Object.entries(STATUT_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+              <option value="COLLEGUES"> Suivi collègues{auditsCollegues.length > 0 ? ` — ${auditsCollegues.length}` : ''}</option>
             </select>
+            {/* ✅ NOUVEAU — filtres Projet / Série (anticipation des séries d'activation à venir) */}
+            {!isCollegueView && projetOptions.length > 0 && (
+              <select value={filterProjet} onChange={e => setFilterProjet(e.target.value)}
+                style={{ border:`1px solid ${T.g300}`, borderRadius:8, padding:'7px 10px', fontSize:'.8rem', fontFamily:'inherit', color:T.g700, background:'#fff', cursor:'pointer' }}>
+                <option value="">Tous les projets</option>
+                {projetOptions.map(([id, nom]) => <option key={id} value={id}>{nom}</option>)}
+              </select>
+            )}
+            {!isCollegueView && serieOptions.length > 0 && (
+              <select value={filterSerie} onChange={e => setFilterSerie(e.target.value)}
+                style={{ border:`1px solid ${T.g300}`, borderRadius:8, padding:'7px 10px', fontSize:'.8rem', fontFamily:'inherit', color:T.g700, background:'#fff', cursor:'pointer' }}>
+                <option value="">Toutes les séries</option>
+                {serieOptions.map(([id, nom]) => <option key={id} value={id}>{nom}</option>)}
+              </select>
+            )}
           </>
         )}
 
@@ -1100,8 +1540,14 @@ export default function AuditeurAuditsPage() {
           ) : sortedProduitAudits.length === 0 ? (
             <div style={{ textAlign:'center', padding:'4rem 2rem', background:'#fff', borderRadius:16, border:`1.5px dashed ${T.g200}` }}>
               <div style={{ width:56, height:56, borderRadius:16, background:T.g50, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px', color:T.g300 }}>{Ic.micro}</div>
-              <div style={{ fontWeight:700, color:T.g500, marginBottom:6 }}>Aucun audit trouvé</div>
-              <div style={{ fontSize:'.8rem', color:T.g400 }}>Modifiez vos filtres ou attendez qu'un expert vous assigne un audit.</div>
+              <div style={{ fontWeight:700, color:T.g500, marginBottom:6 }}>
+                {isCollegueView ? 'Aucun audit en cours chez vos collègues' : 'Aucun audit trouvé'}
+              </div>
+              <div style={{ fontSize:'.8rem', color:T.g400 }}>
+                {isCollegueView
+                  ? 'Aucun collègue de votre plant n\'a d\'audit planifié ou en cours actuellement.'
+                  : 'Modifiez vos filtres ou attendez qu\'un expert vous assigne un audit.'}
+              </div>
             </div>
           ) : (
             <>
@@ -1116,6 +1562,9 @@ export default function AuditeurAuditsPage() {
                   onDelete={deleteAudit}
                   onDemandeTemps={handleDemandeTemps}
                   onModifier={handleModifierAudit}
+                  isCollegue={isCollegueView}
+                  onToggleSuivre={handleOpenSuivi}
+                  suiviLoading={suiviLoadingId === a.id}
                 />
               ))}
             </div>
@@ -1224,6 +1673,16 @@ export default function AuditeurAuditsPage() {
         onClose={() => { setShowModifModal(false); setModifAudit(null); }}
         onSuccess={() => { setShowModifModal(false); setModifAudit(null); load(); }}
       />
+
+      {/* ── ✅ NOUVEAU — Fenêtre de suivi (étapes de réalisation) d'un audit d'un collègue ── */}
+      {suiviModalAudit && (
+        <SuiviCollegueModal
+          audit={suiviModalAudit}
+          onClose={() => setSuiviModalAudit(null)}
+          onToggleSuivre={handleToggleSuivre}
+          suiviLoading={suiviLoadingId === suiviModalAudit.id}
+        />
+      )}
 
       {/* ── DemandeTempsModal ── */}
       <DemandeTempsModal

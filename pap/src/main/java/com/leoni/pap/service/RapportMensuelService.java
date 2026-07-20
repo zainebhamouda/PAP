@@ -11,6 +11,7 @@ import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -82,21 +83,15 @@ public class RapportMensuelService {
     };
 
     // ⚠️ Apache POI est 0-indexé : POI row 14 = ligne Excel 15 (1ère ligne du 1er bloc).
+    // NE JAMAIS mettre 15 ici — ça décale tout d'une ligne et fait tomber le QK/points/
+    // facteur dans une cellule fusionnée cachée (invisible à l'ouverture du fichier).
     private static final int LIGNE_DEPART_BLOC = 14;
     private static final int HAUTEUR_BLOC       = 4;  // chaque audit occupe 4 lignes fusionnées
 
     // Le modèle officiel réel (PI3010_Enclosure_1a.xlsx) prévoit 8 blocs
     // (lignes Excel 15 à 46) avant la zone de résumé (QK min/moyen/max, lignes 48-50)
+    // dont les formules sont figées sur cette plage. Vérifié directement dans le fichier.
     private static final int NB_BLOCS_TEMPLATE = 8;
-
-    // Indices des lignes de résumé dans le modèle original (avant insertion)
-    // Ces lignes contiennent les formules MIN, MOYENNE, MAX pour la colonne QK.
-    // Elles seront décalées automatiquement si on insère des lignes avant.
-    private static final int LIGNE_RESUME_MIN_ORIG = 47;   // ligne Excel 48
-    private static final int LIGNE_RESUME_MOY_ORIG = 48;   // ligne Excel 49
-    private static final int LIGNE_RESUME_MAX_ORIG = 49;   // ligne Excel 50
-    private static final int COLONNE_QK = 3;                // colonne D (0-index)
-
     // ═══════════════════════════════════════════════════════════
     // 1. GÉNÉRATION / RÉGÉNÉRATION
     // ═══════════════════════════════════════════════════════════
@@ -129,6 +124,9 @@ public class RapportMensuelService {
                 .sorted(Comparator.comparing(AuditProduit::getDateRealisation))
                 .collect(Collectors.toList());
 
+        // ✅ Diagnostic — si le rapport ressort vide, ces logs indiquent
+        // immédiatement à quelle étape les audits sont filtrés (regarder
+        // les logs serveur juste après un appel "Générer / régénérer").
         log.info("[RapportMensuel] Plant={} {}/{} — audits avec dateRealisation dans le mois : {} | "
                         + "dont typeAudit=AUDIT_PRODUIT : {} | dont statut=TERMINE : {}",
                 plant.getNom(), mois, annee, auditsBruts.size(), auditsTypeOk.size(), audits.size());
@@ -150,15 +148,8 @@ public class RapportMensuelService {
             Path fichierExcel = dossier.resolve(base + ".xlsx");
             Path fichierPdf   = dossier.resolve(base + ".pdf");
 
-            // Écriture "tout ou rien" : fichiers temporaires
-            Path tmpExcel = dossier.resolve(base + ".xlsx.tmp");
-            Path tmpPdf   = dossier.resolve(base + ".pdf.tmp");
-
-            genererExcel(plant, annee, mois, lignes, tmpExcel);
-            genererPdf(plant, annee, mois, lignes, tmpPdf);
-
-            Files.move(tmpExcel, fichierExcel, StandardCopyOption.REPLACE_EXISTING);
-            Files.move(tmpPdf, fichierPdf, StandardCopyOption.REPLACE_EXISTING);
+            genererExcel(plant, annee, mois, lignes, fichierExcel);
+            genererPdf(plant, annee, mois, lignes, fichierPdf);
 
             RapportMensuel rapport = rapportRepo.findByPlantIdAndAnneeAndMois(plantId, annee, mois)
                     .orElseGet(() -> RapportMensuel.builder()
@@ -171,8 +162,7 @@ public class RapportMensuelService {
 
             return rapportRepo.save(rapport);
         } catch (IOException e) {
-            log.error("Erreur génération rapport mensuel — le rapport précédent (Excel+PDF+compteur) "
-                    + "est conservé tel quel, rien n'a été modifié à moitié.", e);
+            log.error("Erreur génération rapport mensuel", e);
             throw new BusinessException("Impossible de générer le rapport mensuel : " + e.getMessage());
         }
     }
@@ -188,10 +178,21 @@ public class RapportMensuelService {
     // 2. LISTE / RECHERCHE (bouton "Rapport Mensuel" sidebar)
     // ═══════════════════════════════════════════════════════════
 
+    /**
+     * ✅ CORRIGÉ — chaque acteur ne voit que les rapports de SON plant.
+     * @param plantId  plant de l'utilisateur connecté (résolu par le contrôleur
+     *                 depuis Utilisateur.getPlant()). Si null (rôle central
+     *                 sans plant assigné, ex: RESPONSABLE_QUALITE_CENTRALE /
+     *                 ADMIN), aucune restriction n'est appliquée.
+     */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> listerRapports(Integer annee, String recherche, Integer plantId) {
         String rechercheTrim = (recherche == null || recherche.isBlank()) ? null : recherche.trim();
 
+        // ✅ On n'exécute LOWER(plant.nom) que si une recherche texte est
+        // réellement demandée — évite de faire échouer le chargement normal
+        // de la page si la colonne plant.nom est mal typée en base
+        // (voir fix_plant_nom_column.sql).
         List<RapportMensuel> rapports = (rechercheTrim != null)
                 ? rapportRepo.rechercherParTexte(annee, rechercheTrim, plantId)
                 : rapportRepo.rechercherSansTexte(annee, plantId);
@@ -212,6 +213,7 @@ public class RapportMensuelService {
         }).collect(Collectors.toList());
     }
 
+    /** ✅ CORRIGÉ — années disponibles restreintes au plant de l'utilisateur (voir listerRapports). */
     @Transactional(readOnly = true)
     public List<Integer> listerAnneesDisponibles(Integer plantId) {
         return rapportRepo.findAnneesDisponibles(plantId);
@@ -222,6 +224,14 @@ public class RapportMensuelService {
         return rapportRepo.findById(id).orElseThrow(() -> new BusinessException("Rapport introuvable."));
     }
 
+    /**
+     * ✅ NOUVEAU — vérifie qu'un utilisateur "plant scoped" (dont Utilisateur.plant
+     * n'est pas null) a bien le droit de voir/télécharger un rapport donné.
+     * Les rôles centraux (plant == null côté utilisateur) voient tout.
+     * À appeler depuis le contrôleur avant de servir le PDF/Excel ou avant de
+     * lancer une génération pour empêcher un auditeur/chef de service de voir
+     * ou générer le rapport d'un AUTRE plant que le sien.
+     */
     public void verifierAccesPlant(RapportMensuel rapport, Integer plantIdUtilisateur) {
         if (plantIdUtilisateur != null
                 && (rapport.getPlant() == null || !plantIdUtilisateur.equals(rapport.getPlant().getId()))) {
@@ -231,6 +241,17 @@ public class RapportMensuelService {
 
     // ═══════════════════════════════════════════════════════════
     // 3. CONSTRUCTION D'UNE LIGNE À PARTIR D'UN AUDIT
+    // ═══════════════════════════════════════════════════════════
+    //
+    // ✅ CORRIGÉ — Priorité des sources de données pour chaque colonne :
+    //   1) Audit lui-même (AuditProduit) — TOUJOURS disponible dès que
+    //      l'audit est TERMINE (valeurQK/totalPoints/facteur calculés par
+    //      saisirResultats(), nonConformites liées, natureAudit).
+    //   2) Annexe "1B" (formulaire QK détaillé) si elle a été remplie —
+    //      vient AFFINER/COMPLÉTER les champs texte (Part Description,
+    //      Drawing Number...) mais ne doit jamais écraser une valeur
+    //      connue par un null.
+    //   3) Annexe "1A" en dernier recours (brouillon pré-rempli).
     // ═══════════════════════════════════════════════════════════
 
     private LigneRapport construireLigne(AuditProduit audit) {
@@ -259,17 +280,23 @@ public class RapportMensuelService {
                 str(d1b.get("auditor")), str(d1a.get("auditor")),
                 nomComplet(audit.getAuditeur()));
 
+        // QK : Annexe 1B > Annexe 1A > valeur calculée sur l'audit lui-même
         l.qk = doubleOrNull(d1b.get("valeurQK"), doubleOrNull(d1a.get("valeurQK"), audit.getValeurQK()));
 
+        // Nb de défauts : Annexe 1B/1A si renseignée, sinon la liste réelle
+        // des non-conformités enregistrées sur l'audit.
         Integer nbDefectsAudit = (audit.getNonConformites() != null && !audit.getNonConformites().isEmpty())
                 ? audit.getNonConformites().size() : null;
         l.nbDefects = premierNonNull(intOrNull(d1b.get("nbDefects")), intOrNull(d1a.get("nbDefects")), nbDefectsAudit);
 
+        // Total points : Annexe 1B/1A si renseignée, sinon audit.totalPoints
         l.totalPoints = premierNonNull(intOrNull(d1b.get("totalPoints")), intOrNull(d1a.get("totalPoints")),
                 audit.getTotalPoints() != null ? (int) Math.round(audit.getTotalPoints()) : null);
 
+        // Rating factor : Annexe 1B/1A si renseignée, sinon audit.facteur
         l.ratingFactor = doubleOrNull(d1b.get("ratingFactor"), doubleOrNull(d1a.get("ratingFactor"), audit.getFacteur()));
 
+        // D / N : Annexe 1B/1A si renseignée ("D"/"N"), sinon natureAudit de l'audit
         String auditType = premierNonVide(str(d1b.get("auditType")), str(d1a.get("auditType")));
         if (auditType == null && audit.getNatureAudit() != null) {
             auditType = switch (audit.getNatureAudit()) {
@@ -302,11 +329,45 @@ public class RapportMensuelService {
                 throw new BusinessException("Modèle Excel introuvable dans le classpath : " + TEMPLATE_CLASSPATH
                         + " (placer PI3010_Enclosure_1a.xlsx dans src/main/resources/templates/)");
             }
+            // ✅ DIAGNOSTIC — montre EXACTEMENT quel fichier physique est chargé
+            // (utile pour vérifier qu'un ancien .jar packagé avec l'ancien
+            // modèle n'est pas encore en cours d'exécution).
+            java.net.URL resourceUrl = getClass().getResource(TEMPLATE_CLASSPATH);
+            log.info("[RapportMensuel][DIAGNOSTIC] Modèle Excel chargé depuis : {}", resourceUrl);
             try (Workbook wb = new XSSFWorkbook(in)) {
                 Sheet sheet = wb.getSheet(ONGLETS_MOIS[mois - 1]);
                 if (sheet == null) {
                     throw new BusinessException("Onglet du mois introuvable dans le modèle : " + ONGLETS_MOIS[mois - 1]);
                 }
+
+                // ✅ CORRIGÉ — Le modèle officiel a un onglet "actif" figé (celui
+                // affiché à l'ouverture) hérité de la dernière personne à avoir
+                // enregistré le fichier — quasi toujours un onglet SANS les
+                // données du mois généré. Résultat : Excel ouvre le classeur sur
+                // un onglet vide (ex: "Mai") pendant que les vraies données sont
+                // bien présentes sur l'onglet du mois (ex: "Juin"), donnant
+                // l'impression d'un rapport "vide" alors qu'il suffisait de
+                // cliquer sur le bon onglet. On force maintenant l'onglet du
+                // mois généré à être actif et sélectionné à l'ouverture.
+                int sheetIndex = wb.getSheetIndex(sheet);
+                for (int s = 0; s < wb.getNumberOfSheets(); s++) {
+                    wb.getSheetAt(s).setSelected(s == sheetIndex);
+                }
+                wb.setActiveSheet(sheetIndex);
+                wb.setFirstVisibleTab(sheetIndex);
+
+                // ✅ DIAGNOSTIC — log du modèle RÉELLEMENT chargé à cet instant :
+                // nombre de fusions dans la zone de données et leurs adresses
+                // exactes, pour vérifier que le fichier déployé est bien celui
+                // attendu (8 blocs, D/F/G/H/J/L fusionnés par bloc de 4 lignes).
+                List<String> merges15plus = new ArrayList<>();
+                for (CellRangeAddress region : sheet.getMergedRegions()) {
+                    if (region.getFirstRow() >= LIGNE_DEPART_BLOC) {
+                        merges15plus.add(region.formatAsString());
+                    }
+                }
+                log.info("[RapportMensuel][DIAGNOSTIC] Onglet '{}' — lastRowNum={} — {} fusion(s) en zone de données : {}",
+                        ONGLETS_MOIS[mois - 1], sheet.getLastRowNum(), merges15plus.size(), merges15plus);
 
                 // En-tête : "Month / Year" et "Manufacturing Plant"
                 setCellIfFound(sheet, 0, "Month / Year", String.format("%02d/%04d", mois, annee));
@@ -316,109 +377,58 @@ public class RapportMensuelService {
                 CellStyle orange = coloredStyle(wb, IndexedColors.LIGHT_ORANGE.getIndex());
                 CellStyle rouge  = coloredStyle(wb, IndexedColors.RED.getIndex());
 
-                // --- Calcul du nombre de blocs disponibles dans le modèle ---
-                int nbBlocsModel = (sheet.getLastRowNum() - LIGNE_DEPART_BLOC) / HAUTEUR_BLOC;
-                int nbAudits = lignes.size();
-
-                // --- Si plus d'audits que de blocs modèle, insérer des lignes avant la zone de résumé ---
-                if (nbAudits > nbBlocsModel) {
-                    int lignesASupprimer = (nbAudits - nbBlocsModel) * HAUTEUR_BLOC;
-                    int debutResume = LIGNE_DEPART_BLOC + nbBlocsModel * HAUTEUR_BLOC;
-                    // Décaler les lignes à partir du début de la zone de résumé
-                    sheet.shiftRows(debutResume, sheet.getLastRowNum(), lignesASupprimer, true, false);
-
-                    // Copier le style du premier bloc pour les nouveaux blocs
-                    for (int i = nbBlocsModel; i < nbAudits; i++) {
-                        int rowBase = LIGNE_DEPART_BLOC + i * HAUTEUR_BLOC;
-                        for (int offset = 0; offset < HAUTEUR_BLOC; offset++) {
-                            Row srcRow = sheet.getRow(LIGNE_DEPART_BLOC + offset);
-                            Row destRow = sheet.getRow(rowBase + offset);
-                            if (destRow == null) destRow = sheet.createRow(rowBase + offset);
-                            if (srcRow != null) {
-                                for (int c = 0; c < srcRow.getLastCellNum(); c++) {
-                                    Cell srcCell = srcRow.getCell(c);
-                                    if (srcCell != null) {
-                                        Cell destCell = destRow.getCell(c);
-                                        if (destCell == null) destCell = destRow.createCell(c);
-                                        destCell.setCellStyle(srcCell.getCellStyle());
-                                    }
-                                }
-                            }
-                        }
-                    }
+                int maxBlocsDynamique = (sheet.getLastRowNum() - LIGNE_DEPART_BLOC) / HAUTEUR_BLOC;
+                int maxBlocs = Math.min(maxBlocsDynamique, NB_BLOCS_TEMPLATE);
+                if (lignes.size() > maxBlocs) {
+                    log.warn("Rapport mensuel {} {}/{} : {} audits terminés mais le modèle officiel ne "
+                                    + "couvre que {} lignes (formules QK moyen/min/max figées) — les {} audit(s) "
+                                    + "excédentaire(s) ne seront pas inclus dans ce rapport Excel.",
+                            plant.getNom(), mois, annee, lignes.size(), maxBlocs, lignes.size() - maxBlocs);
                 }
 
-                // --- Écrire les données dans tous les blocs (y compris les nouveaux) ---
-                int nbBlocsEffectifs = Math.max(nbAudits, nbBlocsModel);
-                for (int i = 0; i < nbBlocsEffectifs; i++) {
+                // ✅ CORRIGÉ — on efface D'ABORD tous les blocs du modèle (les
+                // maxBlocs disponibles), qu'ils soient utilisés ou non. Avant,
+                // seuls les blocs correspondant à un audit étaient écrits, et
+                // à l'intérieur d'un bloc écrit, un champ null (ex: pas de D/N,
+                // pas de nbDefects) n'était PAS effacé — setCell() n'écrit rien
+                // quand value == null, PAR CONCEPTION (voir sa Javadoc) — donc
+                // d'anciennes données du modèle Excel (ou d'une génération
+                // précédente) pouvaient rester affichées indéfiniment. On vide
+                // maintenant explicitement chaque cellule via clearCell(), qui
+                // force réellement la cellule à vide, AVANT toute écriture.
+                for (int i = 0; i < maxBlocs; i++) {
                     int rowBase = LIGNE_DEPART_BLOC + i * HAUTEUR_BLOC;
-                    if (i < nbAudits) {
-                        LigneRapport l = lignes.get(i);
-
-                        setCell(sheet, rowBase,     0, l.partDesc);
-                        setCell(sheet, rowBase + 1, 0, l.drawingNo);
-                        setCell(sheet, rowBase + 2, 0, l.productionDate);
-                        setCell(sheet, rowBase + 3, 0, l.productAuditor);
-
-                        Cell qkCell = setCell(sheet, rowBase, 3, l.qk);
-                        if (l.qk != null) {
-                            if (l.qk == 0.0)      qkCell.setCellStyle(vert);
-                            else if (l.qk <= 0.5) qkCell.setCellStyle(orange);
-                            else                  qkCell.setCellStyle(rouge);
-                        }
-                        setCell(sheet, rowBase, 5, l.nbDefects);
-                        setCell(sheet, rowBase, 6, l.totalPoints);
-                        setCell(sheet, rowBase, 7, l.ratingFactor);
-                        if (l.destructive) setCell(sheet, rowBase, 9, "D"); else viderCell(sheet, rowBase, 9);
-                        if (l.nonDestructive) setCell(sheet, rowBase, 11, "N"); else viderCell(sheet, rowBase, 11);
-                    } else {
-                        // Bloc vide : effacer toutes les cellules
-                        viderCell(sheet, rowBase,     0);
-                        viderCell(sheet, rowBase + 1, 0);
-                        viderCell(sheet, rowBase + 2, 0);
-                        viderCell(sheet, rowBase + 3, 0);
-                        viderCell(sheet, rowBase, 3);
-                        viderCell(sheet, rowBase, 5);
-                        viderCell(sheet, rowBase, 6);
-                        viderCell(sheet, rowBase, 7);
-                        viderCell(sheet, rowBase, 9);
-                        viderCell(sheet, rowBase, 11);
+                    for (int col : new int[]{0, 3, 5, 6, 7, 9, 11}) {
+                        clearCell(sheet, rowBase, col);
                     }
+                    clearCell(sheet, rowBase + 1, 0);
+                    clearCell(sheet, rowBase + 2, 0);
+                    clearCell(sheet, rowBase + 3, 0);
                 }
 
-                // --- Mettre à jour les formules de synthèse (QK min/moyen/max) ---
-                // Les lignes de résumé sont décalées si on a inséré des lignes.
-                int decalage = Math.max(0, (nbAudits - nbBlocsModel) * HAUTEUR_BLOC);
-                int ligneMin = LIGNE_RESUME_MIN_ORIG + decalage;
-                int ligneMoy = LIGNE_RESUME_MOY_ORIG + decalage;
-                int ligneMax = LIGNE_RESUME_MAX_ORIG + decalage;
+                for (int i = 0; i < lignes.size() && i < maxBlocs; i++) {
+                    LigneRapport l = lignes.get(i);
+                    int rowBase = LIGNE_DEPART_BLOC + i * HAUTEUR_BLOC;
 
-                // Plage des cellules QK : de la première ligne du premier bloc à la dernière ligne du dernier bloc
-                int premiereLigne = LIGNE_DEPART_BLOC;
-                int derniereLigne = LIGNE_DEPART_BLOC + nbAudits * HAUTEUR_BLOC - 1;
-                // Les colonnes sont 0-indexées, Excel utilise 1-indexé
-                String plageQK = "D" + (premiereLigne + 1) + ":D" + (derniereLigne + 1);
+                    setCell(sheet, rowBase,     0, l.partDesc);
+                    setCell(sheet, rowBase + 1, 0, l.drawingNo);
+                    setCell(sheet, rowBase + 2, 0, l.productionDate);
+                    setCell(sheet, rowBase + 3, 0, l.productAuditor);
 
-                Row rowMin = sheet.getRow(ligneMin);
-                if (rowMin != null) {
-                    Cell cellMin = rowMin.getCell(COLONNE_QK);
-                    if (cellMin != null) {
-                        cellMin.setCellFormula("MIN(" + plageQK + ")");
+                    Cell qkCell = setCell(sheet, rowBase, 3, l.qk);
+                    if (l.qk != null) {
+                        if (l.qk == 0.0)      qkCell.setCellStyle(vert);
+                        else if (l.qk <= 0.5) qkCell.setCellStyle(orange);
+                        else                  qkCell.setCellStyle(rouge);
                     }
-                }
-                Row rowMoy = sheet.getRow(ligneMoy);
-                if (rowMoy != null) {
-                    Cell cellMoy = rowMoy.getCell(COLONNE_QK);
-                    if (cellMoy != null) {
-                        cellMoy.setCellFormula("AVERAGE(" + plageQK + ")");
-                    }
-                }
-                Row rowMax = sheet.getRow(ligneMax);
-                if (rowMax != null) {
-                    Cell cellMax = rowMax.getCell(COLONNE_QK);
-                    if (cellMax != null) {
-                        cellMax.setCellFormula("MAX(" + plageQK + ")");
-                    }
+                    setCell(sheet, rowBase, 5, l.nbDefects);
+                    setCell(sheet, rowBase, 6, l.totalPoints);
+                    setCell(sheet, rowBase, 7, l.ratingFactor);
+                    // ✅ écrit "D" ou "N" seulement si applicable — les deux
+                    // colonnes ont déjà été vidées ci-dessus par clearCell(),
+                    // donc celle qui ne s'applique pas reste bien vide.
+                    if (l.destructive)    setCell(sheet, rowBase, 9,  "D");
+                    if (l.nonDestructive) setCell(sheet, rowBase, 11, "N");
                 }
 
                 try (OutputStream out = Files.newOutputStream(destination)) {
@@ -426,6 +436,15 @@ public class RapportMensuelService {
                 }
             }
         }
+    }
+
+    /** Vide réellement une cellule (contrairement à setCell(...,null), qui n'écrit rien par conception). */
+    private void clearCell(Sheet sheet, int rowIdx, int colIdx) {
+        int[] anchor = resolveMergedAnchor(sheet, rowIdx, colIdx);
+        Row row = sheet.getRow(anchor[0]);
+        if (row == null) return;
+        Cell cell = row.getCell(anchor[1]);
+        if (cell != null) cell.setBlank();
     }
 
     private CellStyle coloredStyle(Workbook wb, short colorIndex) {
@@ -436,11 +455,24 @@ public class RapportMensuelService {
     }
 
     /** Écrit une valeur dans la cellule d'ancrage (haut-gauche) d'une zone potentiellement fusionnée. */
+    /**
+     * ✅ CORRIGÉ — écrit dans la VRAIE cellule-ancre (haut-gauche) de la zone
+     * fusionnée qui contient (rowIdx, colIdx), quelle qu'elle soit. Excel
+     * n'affiche jamais le contenu d'une cellule fusionnée qui n'est pas son
+     * ancre — si le modèle Excel réellement déployé a des fusions décalées
+     * par rapport à ce que ce code suppose (ex: D15:E18 au lieu de C15:E18),
+     * l'ancienne version écrivait bien la valeur dans le fichier, mais Excel
+     * ne l'affichait jamais (rapport "vide" malgré des données présentes).
+     * Cette version retrouve systématiquement la vraie ancre avant d'écrire.
+     */
     private Cell setCell(Sheet sheet, int rowIdx, int colIdx, Object value) {
-        Row row = sheet.getRow(rowIdx);
-        if (row == null) row = sheet.createRow(rowIdx);
-        Cell cell = row.getCell(colIdx);
-        if (cell == null) cell = row.createCell(colIdx);
+        int[] anchor = resolveMergedAnchor(sheet, rowIdx, colIdx);
+        int realRow = anchor[0], realCol = anchor[1];
+
+        Row row = sheet.getRow(realRow);
+        if (row == null) row = sheet.createRow(realRow);
+        Cell cell = row.getCell(realCol);
+        if (cell == null) cell = row.createCell(realCol);
         if (value == null) {
             // ne rien écrire
         } else if (value instanceof Number) {
@@ -451,14 +483,14 @@ public class RapportMensuelService {
         return cell;
     }
 
-    /** Vide complètement une cellule (contenu ET mise en forme conditionnelle style QK) pour un bloc sans audit. */
-    private void viderCell(Sheet sheet, int rowIdx, int colIdx) {
-        Row row = sheet.getRow(rowIdx);
-        if (row == null) return;
-        Cell cell = row.getCell(colIdx);
-        if (cell == null) return;
-        cell.setBlank();
-        cell.setCellStyle(sheet.getWorkbook().createCellStyle()); // retire vert/orange/rouge résiduel
+    /** Retourne [row, col] de l'ancre haut-gauche de la zone fusionnée contenant (rowIdx, colIdx), ou [rowIdx, colIdx] si aucune fusion. */
+    private int[] resolveMergedAnchor(Sheet sheet, int rowIdx, int colIdx) {
+        for (CellRangeAddress region : sheet.getMergedRegions()) {
+            if (region.isInRange(rowIdx, colIdx)) {
+                return new int[]{region.getFirstRow(), region.getFirstColumn()};
+            }
+        }
+        return new int[]{rowIdx, colIdx};
     }
 
     /** Recherche la première ligne 0..12 contenant `contientTexte` et écrit dans la cellule voisine / la même cellule. */
@@ -469,6 +501,7 @@ public class RapportMensuelService {
             for (Cell c : row) {
                 if (c.getCellType() == CellType.STRING && c.getStringCellValue() != null
                         && c.getStringCellValue().contains(contientTexte)) {
+                    // Remplace le texte tel quel (ex: "\nMonth / Year\n06/2026" → on ajoute la valeur en fin de libellé)
                     c.setCellValue(contientTexte + " : " + valeur);
                     return;
                 }
@@ -480,6 +513,7 @@ public class RapportMensuelService {
     // 5. GÉNÉRATION PDF (HTML → PDF, cohérent avec AuditProduitPdfService)
     // ═══════════════════════════════════════════════════════════
 
+    // Couleur bleue officielle LEONI, identique à AuditProduitPdfService.
     private static final String LEONI_BLUE = "#003F8A";
 
     private void genererPdf(Plant plant, int annee, int mois, List<LigneRapport> lignes, Path destination)
@@ -489,6 +523,7 @@ public class RapportMensuelService {
 
         StringBuilder html = new StringBuilder();
 
+        // ── En-tête XHTML strict (identique à AuditProduitPdfService.htmlHead) ──
         html.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
                 .append("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n")
                 .append("  \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n")
@@ -513,6 +548,7 @@ public class RapportMensuelService {
                 .append(".page-footer-right { float: right; font-size: 7pt; color: #000; font-weight: 700; }\n")
                 .append("</style>\n</head>\n<body>\n<div class=\"page\">\n");
 
+        // ── Bandeau titre (même logique visuelle que le rapport d'audit produit) ──
         html.append("<table style=\"width:100%;border:none;border-bottom:3px solid #000;margin-bottom:10px;padding-bottom:8px;\">\n")
                 .append("<tbody><tr>\n")
                 .append("<td style=\"border:none;vertical-align:top;width:70%;\">\n")
@@ -524,6 +560,7 @@ public class RapportMensuelService {
                 .append("  <p style=\"font-size:7pt;color:#888;margin:2px 0 0;\">PAP Qualit&#233; v3</p>\n")
                 .append("</td>\n</tr></tbody></table>\n");
 
+        // ── Informations plant / mois / nombre d'audits ──
         html.append("<table style=\"margin-bottom:14px;\">\n<tbody>\n<tr>")
                 .append("<td style=\"font-weight:700;color:#333;background:#F4F4F4;width:20%;\">Plant / Site</td>")
                 .append("<td style=\"width:30%;\">").append(escape(plant.getNom())).append("</td>")
@@ -536,6 +573,7 @@ public class RapportMensuelService {
                 .append("<td>").append(genereLe).append("</td>")
                 .append("</tr>\n</tbody></table>\n");
 
+        // ── Tableau principal des audits ──
         html.append("<table>\n<thead><tr>")
                 .append("<th>Part Description</th><th>Drawing Number</th><th>Production Date</th>")
                 .append("<th>Product Auditor</th><th>QK</th><th>Nb defects</th><th>Total points</th>")

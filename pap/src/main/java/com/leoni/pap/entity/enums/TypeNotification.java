@@ -12,6 +12,10 @@ public enum TypeNotification {
     CERTIF_PRATIQUE_ECHOUE,     // test pratique échoué
     CERTIF_OBTENUE,             // certification complète obtenue
 
+    // ── ✅ NOUVEAU — Import direct par l'expert (auditeur déjà certifié) ──
+    CERTIF_IMPORTEE,            // un expert a importé votre certificat existant
+
+
     // ── CERTIFICAT ───────────────────────────────────────────
     CERTIF_A_SIGNER_EXPERT,     // expert doit signer un certificat
     CERTIF_A_SIGNER_CHEF,       // chef doit signer un certificat

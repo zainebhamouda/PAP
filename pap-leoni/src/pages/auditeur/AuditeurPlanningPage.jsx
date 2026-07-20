@@ -280,10 +280,49 @@ export default function AuditeurPlanningPage() {
     <div style={{ fontFamily: "'Inter','DM Sans',system-ui,sans-serif", background: '#f2f2f4', minHeight: '100vh', padding: '1rem 1.2rem', boxSizing: 'border-box' }}>
 
       {/* ── Header ── */}
-      <div style={{ background: 'linear-gradient(135deg,#001E45 0%,#0057B8 100%)', borderRadius: 18, padding: '1rem 1.2rem', color: '#fff', marginBottom: 10, boxShadow: '0 8px 32px rgba(0,30,69,.25)',marginTop:'-29px'}}>
-        <div style={{ fontSize: '.72rem', textTransform: 'uppercase', letterSpacing: '.1em', opacity: .7, fontWeight: 700 }}>Auditeur · Planning</div>
-        <h1 style={{ margin: '4px 0 4px', fontSize: '1.6rem', fontWeight: 900, color: C.blue }}>Planning des audits</h1>
+      <div style={{
+        background: 'linear-gradient(135deg,#001E45 0%,#0057B8 100%)',
+        borderRadius: 18,
+        padding: '1rem 1.2rem',
+        color: '#fff',
+        marginBottom: 10,
+        boxShadow: '0 8px 32px rgba(0,30,69,.25)',
+        marginTop: '-29px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        flexWrap: 'wrap',
+      }}>
+        <div>
+          <div style={{ fontSize: '.72rem', textTransform: 'uppercase', letterSpacing: '.1em', opacity: .7, fontWeight: 700 }}>Auditeur · Planning</div>
+          <h1 style={{ margin: '4px 0 4px', fontSize: '1.6rem', fontWeight: 900, color: C.blue }}>Planning des audits</h1>
+        </div>
 
+        {/* ✅ NOUVEAU : bouton vers la page de suivi des planifications */}
+        <button
+          onClick={() => navigate('/auditeur/suivi-planification')}
+          style={{
+            border: '1px solid rgba(255,255,255,.35)',
+            background: 'rgba(255,255,255,.12)',
+            color: '#fff',
+            borderRadius: 10,
+            padding: '10px 18px',
+            fontFamily: 'inherit',
+            fontWeight: 800,
+            fontSize: '.82rem',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            whiteSpace: 'nowrap',
+            transition: 'background .15s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.22)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,.12)'}
+        >
+          📋 Suivi mes planifications
+        </button>
       </div>
 
       {/* ── Layout 2 colonnes ── */}
@@ -432,6 +471,33 @@ export default function AuditeurPlanningPage() {
                           }}
                         >
                           Supprimer
+                        </button>
+                      </div>
+                    )}
+
+                    {((p.statut || '').toUpperCase() !== 'BROUILLON' && String(p.createurId) === String(user?.id)) && (
+                      <div style={{ marginTop: 10 }}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/auditeur/suivi-planification?planifId=${p.id}`);
+                          }}
+                          style={{
+                            border: 'none',
+                            borderRadius: 8,
+                            padding: '6px 12px',
+                            background: active ? 'rgba(255,255,255,.16)' : C.blueL,
+                            color: active ? '#fff' : C.blue,
+                            cursor: 'pointer',
+                            fontFamily: 'inherit',
+                            fontSize: '.72rem',
+                            fontWeight: 800,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 5,
+                          }}
+                        >
+                          📋 Suivi
                         </button>
                       </div>
                     )}

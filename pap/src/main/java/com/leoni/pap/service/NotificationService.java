@@ -214,6 +214,7 @@ public class NotificationService {
                  CERTIF_PRATIQUE_REUSSI,
                  CERTIF_PRATIQUE_ECHOUE,
                  CERTIF_OBTENUE,
+                 CERTIF_IMPORTEE,
                  CERTIF_A_SIGNER_EXPERT,
                  FICHE_REPARATION_CREEE,
                  FICHE_REPARATION_VALIDEE_CHEF,
@@ -265,6 +266,8 @@ public class NotificationService {
             case CERTIF_PRATIQUE_REUSSI  -> "Test pratique réussi";
             case CERTIF_PRATIQUE_ECHOUE  -> "Échec au test pratique";
             case CERTIF_OBTENUE          -> "Certification obtenue";
+            // ✅ NOUVEAU — Import direct par l'expert (auditeur déjà certifié)
+            case CERTIF_IMPORTEE         -> "Certificat importé";
             // Certificat
             case CERTIF_A_SIGNER_EXPERT  -> "Signature expert requise";
             case CERTIF_A_SIGNER_CHEF    -> "Signature chef requise";

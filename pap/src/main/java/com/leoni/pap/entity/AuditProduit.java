@@ -109,6 +109,23 @@ public class AuditProduit {
     @JoinColumn(name = "responsable_magasin_id")
     private Utilisateur responsableMagasin;
 
+    /**
+     * ✅ NOUVEAU — Suivi entre collègues du même plant : liste des auditeurs
+     * qui "suivent" la réalisation de cet audit (sans en avoir la
+     * responsabilité). Permet à un auditeur de suivre l'avancement d'un
+     * audit encore planifié ou en cours réalisé par un camarade du même
+     * plant, sans pouvoir le modifier ni le démarrer/terminer à sa place.
+     */
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "audit_produit_suiveurs",
+            joinColumns = @JoinColumn(name = "audit_id"),
+            inverseJoinColumns = @JoinColumn(name = "suiveur_id")
+    )
+    @JsonIgnore
+    @Builder.Default
+    private java.util.Set<Utilisateur> suiveurs = new java.util.HashSet<>();
+
     @Column(length = 50)
     private String domaine;
 

@@ -194,4 +194,46 @@ public interface AuditProduitRepository extends JpaRepository<AuditProduit, Long
             Integer auditeurId,
             LocalDate debut,
             LocalDate fin);
+
+    // ── PAR PROJET / SÉRIE (filtre page "Mes audits") ─────────
+    List<AuditProduit> findByAuditeurIdAndTypeAuditAndProjetId(
+            Integer auditeurId, TypeAudit type, Integer projetId);
+
+    List<AuditProduit> findByAuditeurIdAndTypeAuditAndSerieId(
+            Integer auditeurId, TypeAudit type, Integer serieId);
+
+    List<AuditProduit> findByAuditeurIdAndTypeAuditAndProjetIdAndSerieId(
+            Integer auditeurId, TypeAudit type, Integer projetId, Integer serieId);
+
+    // ── AUDITS DES COLLÈGUES DU MÊME PLANT (suivi) ─────────────
+    /**
+     * ✅ NOUVEAU — Audits produit encore actifs (PLANIFIE ou EN_COURS),
+     * appartenant à un collègue du MÊME plant que l'auditeur connecté, afin
+     * qu'il puisse suivre l'avancement de leur réalisation (lecture seule).
+     * On exclut les audits déjà assignés à l'auditeur connecté (déjà dans
+     * "mes audits").
+     */
+    @Query("""
+        SELECT a FROM AuditProduit a
+        WHERE a.typeAudit = 'AUDIT_PRODUIT'
+          AND a.statut IN ('PLANIFIE', 'EN_COURS')
+          AND a.plant.id = :plantId
+          AND a.auditeur.id <> :auditeurId
+        ORDER BY a.datePrevue ASC
+        """)
+    List<AuditProduit> findAuditsColleguesMemePlant(@Param("plantId") Integer plantId,
+                                                    @Param("auditeurId") Integer auditeurId);
+
+    // ── AUDITS SUIVIS PAR UN AUDITEUR ───────────────────────────
+    /**
+     * ✅ NOUVEAU — Audits (de collègues) que l'auditeur connecté a choisi
+     * de suivre, pour afficher l'onglet "Mon suivi" avec le statut à jour.
+     */
+    @Query("""
+        SELECT a FROM AuditProduit a
+        JOIN a.suiveurs s
+        WHERE s.id = :suiveurId
+        ORDER BY a.datePrevue ASC
+        """)
+    List<AuditProduit> findAuditsSuivisPar(@Param("suiveurId") Integer suiveurId);
 }

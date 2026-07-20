@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auditeurCertifAPI } from '../../services/certifAPI';
-import api from '../../services/api';
+import api, { certificatAuditeurAPI } from '../../services/api';
 import ChoixQualification from './ChoixQualification';
 import ModalQrCode from '../../components/certif/ModalQrCode';
 
@@ -89,6 +89,28 @@ function getEtapeLabel(statut) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
+   ✅ NOUVEAU — Adapte un certificat importé (hors circuit examen) au
+   même format qu'un "passage" issu de l'examen normal, pour pouvoir le
+   réutiliser tel quel dans toute la liste / les filtres / les compteurs.
+═══════════════════════════════════════════════════════════════════ */
+function mapCertifImporte(c) {
+  return {
+    id: `imp-${c.id}`,
+    isImporte: true,
+    statut: 'CERTIFIE',
+    statutCertificat: 'VALIDE_CHEF',
+    certificationTitre: 'Certificat importé (avant PAP)',
+    certificationClientNom: c.plantNom || null,
+    dateValidationChef: c.dateObtention,
+    dateDebut: c.dateObtention,
+    dateExpiration: c.dateExpiration,
+    chefValidateurNom: c.importeParNom,
+    certificatPdfPath: c.cheminPdf,
+    cheminPdf: c.cheminPdf,
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    MODAL : Voir le certificat (iframe PDF)
 ═══════════════════════════════════════════════════════════════════ */
 function ModalVoirCertificat({ passage, onClose }) {
@@ -97,8 +119,24 @@ function ModalVoirCertificat({ passage, onClose }) {
   const [error, setError]       = useState('');
   const [dlLoading, setDlLoading] = useState(false);
 
+  // ✅ Base URL API (sans le suffixe /api) pour construire l'URL statique
+  // d'un certificat importé, servi tel quel par le backend (pas de blob
+  // à re-fetcher via un endpoint dédié comme pour un passage normal).
+  const staticBaseUrl = (api.defaults?.baseURL || 'http://localhost:8080/api').replace('/api', '');
+
   useEffect(() => {
     if (!passage) return;
+
+    // ✅ Certificat importé : pas d'endpoint /voirCertificat dédié, on
+    // affiche directement le fichier statique stocké par l'expert.
+    if (passage.isImporte) {
+      setLoading(false);
+      setError('');
+      setPdfUrl(passage.cheminPdf ? `${staticBaseUrl}${passage.cheminPdf}` : null);
+      if (!passage.cheminPdf) setError('Aucun fichier PDF disponible pour ce certificat.');
+      return;
+    }
+
     let objectUrl = null;
     setLoading(true); setError('');
 
@@ -116,6 +154,16 @@ function ModalVoirCertificat({ passage, onClose }) {
   }, [passage?.id]);
 
   const handleExporter = async () => {
+    // ✅ Certificat importé : téléchargement direct du fichier statique.
+    if (passage.isImporte) {
+      if (!passage.cheminPdf) { alert('Aucun fichier PDF disponible.'); return; }
+      const a = document.createElement('a');
+      a.href = `${staticBaseUrl}${passage.cheminPdf}`;
+      a.download = `certificat_${passage.certificationTitre || passage.id}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+      return;
+    }
+
     setDlLoading(true);
     try {
       const r = await auditeurCertifAPI.exporterCertificat(passage.id);
@@ -173,7 +221,9 @@ function ModalVoirCertificat({ passage, onClose }) {
           <div style={{ background:'#d3eadf',borderBottom:'1px solid #A7F3D0',padding:'10px 22px',display:'flex',alignItems:'center',gap:10,flexShrink:0 }}>
             <span style={{ color:'#059669',display:'flex' }}>{IC.check}</span>
             <span style={{ fontSize:'.82rem',fontWeight:700,color:'#065F46' }}>
-              Certifié ✓ · Validé le {fmt(passage.dateValidationChef)} par {passage.chefValidateurNom || 'le chef de service'}
+              {passage.isImporte
+                ? `Certifié ✓ · Importé par ${passage.chefValidateurNom || "l'expert"}`
+                : `Certifié ✓ · Validé le ${fmt(passage.dateValidationChef)} par ${passage.chefValidateurNom || 'le chef de service'}`}
             </span>
             {passage.scoreTheoriquePct != null && (
               <span style={{ marginLeft:'auto',fontSize:'.72rem',color:'#059669',fontWeight:600 }}>
@@ -194,10 +244,12 @@ function ModalVoirCertificat({ passage, onClose }) {
             <div style={{ display:'flex',alignItems:'center',justifyContent:'center',height:300,flexDirection:'column',gap:14,padding:'2rem' }}>
               <div style={{ fontSize:'2rem' }}>⚠️</div>
               <p style={{ color:'#DC2626',fontWeight:600,fontSize:'.88rem',textAlign:'center',margin:0 }}>{error}</p>
-              <button onClick={handleExporter} disabled={dlLoading}
-                style={{ display:'flex',alignItems:'center',gap:7,padding:'10px 20px',background:'#0B1E3D',color:'#fff',border:'none',borderRadius:10,cursor:'pointer',fontSize:'.88rem',fontWeight:700,fontFamily:'inherit' }}>
-                {dlLoading ? <><Spinner/> Export…</> : <>{IC.download} Exporter le PDF</>}
-              </button>
+              {!passage.isImporte && (
+                <button onClick={handleExporter} disabled={dlLoading}
+                  style={{ display:'flex',alignItems:'center',gap:7,padding:'10px 20px',background:'#0B1E3D',color:'#fff',border:'none',borderRadius:10,cursor:'pointer',fontSize:'.88rem',fontWeight:700,fontFamily:'inherit' }}>
+                  {dlLoading ? <><Spinner/> Export…</> : <>{IC.download} Exporter le PDF</>}
+                </button>
+              )}
             </div>
           ) : pdfUrl ? (
             <iframe
@@ -237,6 +289,7 @@ function ModalVoirCertificat({ passage, onClose }) {
 export default function AuditeurQualifications() {
   const navigate = useNavigate();
   const [passages,       setPassages]       = useState([]);
+  const [certifsImportes, setCertifsImportes] = useState([]); // ✅ NOUVEAU
   const [enCours,        setEnCours]        = useState(null);
   const [loading,        setLoading]        = useState(true);
   const [filter,         setFilter]         = useState('TOUS');
@@ -250,21 +303,38 @@ export default function AuditeurQualifications() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [hist, ec, dispo] = await Promise.allSettled([
+    const [hist, ec, dispo, importes] = await Promise.allSettled([
       auditeurCertifAPI.getHistorique(),
       auditeurCertifAPI.getEnCours(),
       auditeurCertifAPI.getCertificationsDisponibles(),
+      certificatAuditeurAPI.getMesCertificats(), // ✅ NOUVEAU
     ]);
     if (hist.status  === 'fulfilled') setPassages(hist.value.data || []);
     if (ec.status    === 'fulfilled') setEnCours(ec.value.data);
     if (dispo.status === 'fulfilled') setNbDisponibles((dispo.value.data || []).length);
+    if (importes.status === 'fulfilled') setCertifsImportes(importes.value.data || []); // ✅ NOUVEAU
     setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
+  // ✅ NOUVEAU — liste combinée : passages via examen + certificats importés,
+  // tous deux traités de façon uniforme partout ci-dessous.
+  const allPassages = [...passages, ...certifsImportes.map(mapCertifImporte)];
+
   // ── Exporter le certificat (téléchargement) ─────────────────────
   const handleExporter = async (p) => {
+    // ✅ Certificat importé : fichier statique, pas d'appel API dédié.
+    if (p.isImporte) {
+      if (!p.cheminPdf) { alert('Certificat non disponible.'); return; }
+      const staticBaseUrl = (api.defaults?.baseURL || 'http://localhost:8080/api').replace('/api', '');
+      const a = document.createElement('a');
+      a.href = `${staticBaseUrl}${p.cheminPdf}`;
+      a.download = `certificat_${p.certificationTitre || p.id}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+      return;
+    }
+
     setDlId(p.id);
     try {
       const r = await auditeurCertifAPI.exporterCertificat(p.id);
@@ -308,7 +378,7 @@ export default function AuditeurQualifications() {
     p.statut === 'CERTIFIE' ||
     (p.statut === 'RAPPORT_VALIDE' && p.statutCertificat === 'VALIDE_CHEF');
 
-  const filtered = passages.filter(p => {
+  const filtered = allPassages.filter(p => {
     if (filter === 'ATTENTE') return p.statut === 'EN_ATTENTE';
     if (filter === 'COURS')  return STATUTS_EN_COURS.includes(p.statut);
     if (filter === 'VALIDATION') return p.statut === 'PRATIQUE_EN_COURS' && p.rapportPratiqueJson;
@@ -351,7 +421,7 @@ export default function AuditeurQualifications() {
               Mes Qualifications
             </h1>
             <p style={{ margin:0,fontSize:'.78rem',color:'#9CA3AF',marginTop:3 }}>
-              {passages.length} passage{passages.length!==1?'s':''} · {passages.filter(estQualifie).length} qualifié{passages.filter(estQualifie).length!==1?'s':''}
+              {allPassages.length} passage{allPassages.length!==1?'s':''} · {allPassages.filter(estQualifie).length} qualifié{allPassages.filter(estQualifie).length!==1?'s':''}
             </p>
           </div>
         </div>
@@ -402,7 +472,7 @@ export default function AuditeurQualifications() {
       {/* ── FILTRES ── */}
       <div style={{ display:'flex',gap:6,flexWrap:'wrap' }}>
         {FILTERS.map(f => {
-          const cnt = passages.filter(p => {
+          const cnt = allPassages.filter(p => {
             if (f.k==='ATTENTE') return p.statut === 'EN_ATTENTE';
             if (f.k==='COURS')  return STATUTS_EN_COURS.includes(p.statut);
             if (f.k==='VALIDATION') return p.statut === 'PRATIQUE_EN_COURS' && p.rapportPratiqueJson;
@@ -475,6 +545,12 @@ export default function AuditeurQualifications() {
                     <span style={{ background:st.bg,color:st.color,fontSize:'.7rem',fontWeight:600,padding:'3px 10px',borderRadius:99,flexShrink:0,border:st.border?`1px solid ${st.border}`:'none',letterSpacing:'.01em',boxShadow:'0 1px 2px rgba(0,0,0,.03)' }}>
                       {st.label}
                     </span>
+                    {/* ✅ NOUVEAU — badge distinctif pour les certificats importés */}
+                    {p.isImporte && (
+                      <span style={{ background:'#F0FDFA',color:'#0F766E',fontSize:'.68rem',fontWeight:700,padding:'3px 10px',borderRadius:99,border:'1px solid #99F6E4' }}>
+                        Importé
+                      </span>
+                    )}
                     {/* Badge statut certificat */}
                     {p.statutCertificat === 'EN_ATTENTE_CHEF' && (
                       <span style={{ background:'#FEF3C7',color:'#ac5c01',fontSize:'.7rem',fontWeight:600,padding:'3px 10px',borderRadius:99,border:'1px solid #f2ce3f',letterSpacing:'.01em',boxShadow:'0 1px 2px rgba(0,0,0,.03)' }}>
@@ -529,24 +605,27 @@ export default function AuditeurQualifications() {
                           ? <><span style={{ width:12,height:12,border:'2px solid rgba(255,255,255,.3)',borderTopColor:'#fff',borderRadius:'50%',display:'inline-block',animation:'spin .7s linear infinite' }}/> Export…</>
                           : <>{IC.download} Exporter</>}
                       </button>
-                      {/* Bouton QR Code */}
-<button
-  onClick={() => {
-    console.log('p =', JSON.stringify(p));
-    setQrTarget(p);
-  }}
-  style={{
-    display:'flex', alignItems:'center', gap:6,
-    background:'#F5F3FF', color:'#7C3AED',
-    border:'1px solid #beb4e8', borderRadius:9,
-    padding:'7px 13px', fontSize:'.82rem',
-    fontWeight:700, cursor:'pointer', fontFamily:'inherit',
-    transition:'all .14s', whiteSpace:'nowrap',
-  }}
-  onMouseEnter={e => { e.currentTarget.style.background='#EDE9FE'; e.currentTarget.style.transform='translateY(-1px)'; }}
-  onMouseLeave={e => { e.currentTarget.style.background='#F5F3FF'; e.currentTarget.style.transform='none'; }}>
-  QR Code
-</button>
+                      {/* Bouton QR Code — non disponible pour un certificat importé
+                          (pas de passageId/certificationId en base pour ce circuit) */}
+                      {!p.isImporte && (
+                        <button
+                          onClick={() => {
+                            console.log('p =', JSON.stringify(p));
+                            setQrTarget(p);
+                          }}
+                          style={{
+                            display:'flex', alignItems:'center', gap:6,
+                            background:'#F5F3FF', color:'#7C3AED',
+                            border:'1px solid #beb4e8', borderRadius:9,
+                            padding:'7px 13px', fontSize:'.82rem',
+                            fontWeight:700, cursor:'pointer', fontFamily:'inherit',
+                            transition:'all .14s', whiteSpace:'nowrap',
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background='#EDE9FE'; e.currentTarget.style.transform='translateY(-1px)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background='#F5F3FF'; e.currentTarget.style.transform='none'; }}>
+                          QR Code
+                        </button>
+                      )}
                     </>
                   )}
                 </div>

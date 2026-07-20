@@ -106,7 +106,12 @@ public class SerieService {
 
         return SerieResponse.from(serieRepo.save(s));
     }
-
+    @Transactional(readOnly = true)
+    public List<SerieResponse> getByProjetId(Integer projetId) {
+        return serieRepo.findByProjetId(projetId).stream()
+                .map(SerieResponse::from)
+                .collect(Collectors.toList());
+    }
     // ── ACTIVATION / DÉSACTIVATION ────────────────────────────
 
     public SerieResponse toggleActif(Integer id) {

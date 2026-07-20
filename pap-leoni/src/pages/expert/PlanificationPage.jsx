@@ -531,10 +531,18 @@ function EtapeCompleter({planificationId,auditsRaw,onBack,onLanced,info}){
 
     const loadAuditeurs = async () => {
       try {
-        const [auditeursRes, passagesRes] = await Promise.all([
+        const sidEarly = selPlant.startsWith?.('id:') ? parseInt(selPlant.slice(3), 10) : null;
+        const plantIdPourCertifs = sidEarly ?? planifPlantId ?? null;
+        // ✅ NOUVEAU — "sauf VW" : les certificats VW gardent leur propre circuit dédié
+        const estClientVW = normalizeClientLabel(info?.client).includes('vw');
+
+        const [auditeursRes, passagesRes, certifsImportesRes] = await Promise.all([
           fetch('http://localhost:8080/api/utilisateurs/auditeurs', { headers: apiH() }),
           info?.client
             ? fetch('http://localhost:8080/api/expert-audit/passages/all', { headers: apiH() })
+            : Promise.resolve({ ok: false, json: async () => [] }),
+          (info?.client && plantIdPourCertifs && !estClientVW)
+            ? fetch(`http://localhost:8080/api/certificats-auditeur/auditeurs-certifies/${plantIdPourCertifs}`, { headers: apiH() })
             : Promise.resolve({ ok: false, json: async () => [] }),
         ]);
 
@@ -583,6 +591,16 @@ function EtapeCompleter({planificationId,auditsRaw,onBack,onLanced,info}){
               idAuditeursQualifies.add(String(auditeurTrouve.id));
             }
           });
+
+          // ✅ NOUVEAU — ajoute les auditeurs certifiés via un certificat importé
+          // par l'expert (auditeurs déjà certifiés avant la mise en place de
+          // l'application). Ne s'applique pas au client VW (circuit dédié).
+          if (certifsImportesRes.ok) {
+            const certifsImportes = await certifsImportesRes.json();
+            (Array.isArray(certifsImportes) ? certifsImportes : []).forEach(a => {
+              if (a?.id != null) idAuditeursQualifies.add(String(a.id));
+            });
+          }
 
           console.log('[DEBUG] idAuditeursQualifies pour', info.client, ':', Array.from(idAuditeursQualifies));
 

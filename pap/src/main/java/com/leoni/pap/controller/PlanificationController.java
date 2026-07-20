@@ -123,15 +123,20 @@ public class PlanificationController {
                 planifService.getMesPlanifications(getCurrentUserId(user)));
     }
 
+    // ✅ CORRIGÉ : ajout du rôle AUDITEUR (c'est ce endpoint qu'appelle
+    // AuditeurSuiviPlanification.jsx via fetchPlanifDetail -> 500 sinon,
+    // car Spring renvoyait un AccessDeniedException converti en 500
+    // par le handler global au lieu d'un 403 propre)
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('EXPERT_PRODUCT_AUDIT','RESPONSABLE_QUALITE_CENTRALE')")
+    @PreAuthorize("hasAnyRole('EXPERT_PRODUCT_AUDIT','RESPONSABLE_QUALITE_CENTRALE','AUDITEUR')")
     @Operation(summary = "Détail d'une planification")
     public ResponseEntity<PlanificationResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(planifService.getById(id));
     }
 
+    // ✅ CORRIGÉ : ajout du rôle AUDITEUR (même raison que ci-dessus)
     @GetMapping("/{id}/segment")
-    @PreAuthorize("hasAnyRole('EXPERT_PRODUCT_AUDIT','RESPONSABLE_QUALITE_CENTRALE')")
+    @PreAuthorize("hasAnyRole('EXPERT_PRODUCT_AUDIT','RESPONSABLE_QUALITE_CENTRALE','AUDITEUR')")
     @Operation(summary = "Segment d'une planification")
     public ResponseEntity<SegmentResponse> getSegmentByPlanification(@PathVariable Long id) {
         return ResponseEntity.ok(planifService.getSegmentByPlanificationId(id));
@@ -153,6 +158,18 @@ public class PlanificationController {
             @AuthenticationPrincipal UserDetails user) {
         return ResponseEntity.ok(
                 planifService.getMesPlanificationsAuditeur(getCurrentUserId(user)));
+    }
+
+    @GetMapping("/mes-planifications-creees")
+    @PreAuthorize("hasRole('AUDITEUR')")
+    @Operation(
+            summary = "Planifications créées par l'auditeur (Suivi)",
+            description = "Uniquement les planifications que l'auditeur connecté a lui-même créées, pour son écran de suivi."
+    )
+    public ResponseEntity<List<PlanificationResponse>> getMesPlanificationsCreesAuditeur(
+            @AuthenticationPrincipal UserDetails user) {
+        return ResponseEntity.ok(
+                planifService.getMesPlanificationsCreesAuditeur(getCurrentUserId(user)));
     }
 
     // ── EXPORT FICHIER PLANIFICATION ──────────────────────────

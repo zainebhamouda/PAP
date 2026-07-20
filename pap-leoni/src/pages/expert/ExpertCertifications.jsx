@@ -1,11 +1,12 @@
 import { useState, useEffect,useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import api from '../../services/api';
+import api, { certificatAuditeurAPI } from '../../services/api';
 import CertifDetail from './CertifDetail';
 import ModalGenererCertificat from '../../components/certif/ModalGenererCertificat';
 import ModalQrCode from '../../components/certif/ModalQrCode';
 import ModalReponsesTheoriques from '../../components/certif/ModalReponsesTheoriques';
+import ImporterCertificatModal from './ImporterCertificatModal';
 /* ─── Icons ─── */
 const Ico = {
   shield:  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
@@ -1258,9 +1259,9 @@ function PassageRow({ p, idx, total, onValider, onDebloquer, onGenererCertif, on
   );
 }
 
-function PassageList({ passages, emptyTitle, emptyIcon, onValider, onDebloquer, onGenererCertif, onQr }) {
+function PassageList({ passages, emptyTitle, emptyIcon, onValider, onDebloquer, onGenererCertif, onQr, onImporterCertificat }) {
   const { t } = useTranslation();
-  if (passages.length === 0) return <EmptyState icon={emptyIcon} title={emptyTitle} />;
+  if (passages.length === 0 && !onImporterCertificat) return <EmptyState icon={emptyIcon} title={emptyTitle} />;
   return (
     <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
       <div style={{ padding:'12px 20px', background:'linear-gradient(135deg,#F8FAFC,#F1F5F9)', borderBottom:'1px solid #E2E8F0', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
@@ -1270,14 +1271,68 @@ function PassageList({ passages, emptyTitle, emptyIcon, onValider, onDebloquer, 
             {t('expert.certif.passages.auditorsCount', { count: passages.length })}
           </span>
         </div>
-        <span style={{ fontSize:'.72rem', color:'#94A3B8', fontWeight:600 }}>
-          {passages.filter(p => p.scorePratique != null).length > 0 &&
-            t('expert.certif.passages.practicalScoresRecorded', { count: passages.filter(p => p.scorePratique != null).length })}
-        </span>
+        {/* ✅ NOUVEAU — sur l'onglet "Certifiés" : bouton d'import à la place
+            du texte "Scores pratiques enregistrés" (peu pertinent ici). */}
+        {onImporterCertificat ? (
+          <button onClick={onImporterCertificat}
+            style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'7px 13px', borderRadius:9, border:'none', background:'linear-gradient(135deg,#0D9488,#0F766E)', color:'#fff', fontWeight:700, fontSize:'.74rem', cursor:'pointer', fontFamily:'inherit', boxShadow:'0 3px 10px rgba(13,148,136,.3)' }}>
+             Importer un certificat
+          </button>
+        ) : (
+          <span style={{ fontSize:'.72rem', color:'#94A3B8', fontWeight:600 }}>
+            {passages.filter(p => p.scorePratique != null).length > 0 &&
+              t('expert.certif.passages.practicalScoresRecorded', { count: passages.filter(p => p.scorePratique != null).length })}
+          </span>
+        )}
       </div>
-      {passages.map((p, i) => (
-        <PassageRow key={p.id} p={p} idx={i} total={passages.length}
-          onValider={onValider} onDebloquer={onDebloquer} onGenererCertif={onGenererCertif}  onQr={onQr}/>
+      {passages.length === 0
+        ? <EmptyState icon={emptyIcon} title={emptyTitle} />
+        : passages.map((p, i) => (
+            <PassageRow key={p.id} p={p} idx={i} total={passages.length}
+              onValider={onValider} onDebloquer={onDebloquer} onGenererCertif={onGenererCertif}  onQr={onQr}/>
+          ))}
+    </div>
+  );
+}
+
+/* ─── ✅ NOUVEAU — Certificats importés (auditeurs déjà certifiés, hors circuit de tests) ─── */
+function CertificatsImportesList({ certifs, onAnnuler, annulingId }) {
+  if (!certifs || certifs.length === 0) return null;
+  const fmt = d => { if (!d) return '—'; try { return new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' }); } catch { return d; } };
+  return (
+    <div style={{ background:'#fff', borderRadius:14, border:'1px solid #E2E8F0', overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.04)', marginBottom:16 }}>
+      <div style={{ padding:'12px 20px', background:'linear-gradient(135deg,#F0FDFA,#ECFDF5)', borderBottom:'1px solid #E2E8F0', display:'flex', alignItems:'center', gap:8 }}>
+        <div style={{ width:6, height:6, borderRadius:'50%', background:'#0D9488' }}/>
+        <span style={{ fontSize:'.75rem', fontWeight:700, color:'#0F766E', textTransform:'uppercase', letterSpacing:'.08em' }}>
+           Certificats importés ({certifs.length})
+        </span>
+        <span style={{ fontSize:'.7rem', color:'#64748B', marginLeft:'auto' }}>Auditeurs déjà certifiés — importés directement, sans passer par les tests</span>
+      </div>
+      {certifs.map(c => (
+        <div key={c.id} style={{ display:'flex', alignItems:'center', gap:14, padding:'12px 20px', borderBottom:'1px solid #F1F5F9' }}>
+          <div style={{ width:38, height:38, borderRadius:10, background: c.expire ? '#FEF2F2' : '#F0FDF4', color: c.expire ? '#DC2626' : '#16A34A', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:800, fontSize:'1rem', flexShrink:0 }}>
+            {c.auditeurNom ? c.auditeurNom.charAt(0) : '?'}
+          </div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontWeight:700, fontSize:'.85rem', color:'#1E293B' }}>{c.auditeurNom}{c.auditeurMatricule ? ` (${c.auditeurMatricule})` : ''}</div>
+            <div style={{ fontSize:'.72rem', color:'#64748B', marginTop:2 }}>
+              Obtenu le {fmt(c.dateObtention)} · Expire le {fmt(c.dateExpiration)} · Importé par {c.importeParNom || '—'}
+            </div>
+          </div>
+          <span style={{ fontSize:'.68rem', fontWeight:700, padding:'4px 10px', borderRadius:99, background: c.expire ? '#FEE2E2' : '#DCFCE7', color: c.expire ? '#B91C1C' : '#15803D', whiteSpace:'nowrap' }}>
+            {c.expire ? 'Expiré' : `Valide (${c.joursRestants}j)`}
+          </span>
+          {c.nomFichierPdf && (
+            <a href={`http://localhost:8080${c.cheminPdf || ''}`} target="_blank" rel="noreferrer"
+              style={{ fontSize:'.72rem', fontWeight:700, color:'#0D9488', textDecoration:'none', whiteSpace:'nowrap' }}>
+              📄 PDF
+            </a>
+          )}
+          <button onClick={() => onAnnuler(c)} disabled={annulingId === c.id}
+            style={{ padding:'5px 10px', borderRadius:7, border:'1px solid #FCA5A5', background:'#fff', color:'#DC2626', fontWeight:700, fontSize:'.68rem', cursor: annulingId === c.id ? 'default' : 'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>
+            {annulingId === c.id ? '…' : 'Annuler'}
+          </button>
+        </div>
       ))}
     </div>
   );
@@ -1417,26 +1472,45 @@ export default function ExpertCertifications() {
   const [debloquant,       setDebloquant]       = useState(false);
   const [genererCertif,    setGenererCertif]    = useState(null); // ✅ useState correctement placé
 const [qrTarget, setQrTarget] = useState(null);
+  const [showImporterCertif, setShowImporterCertif] = useState(false); // ✅ NOUVEAU
+  const [certifsImportes, setCertifsImportes] = useState([]); // ✅ NOUVEAU — certificats importés (hors circuit tests)
+  const [annulingCertifId, setAnnulingCertifId] = useState(null); // ✅ NOUVEAU
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [rC, rB, rTT, rTP, rAll] = await Promise.allSettled([
+      const [rC, rB, rTT, rTP, rAll, rImportes] = await Promise.allSettled([
         api.get('/expert-audit/certifications/all'),
         api.get('/expert-audit/certifications/mes-brouillons'),
         api.get('/expert-audit/tests/all'),
         api.get('/expert-audit/tests-pratiques/all'),
         api.get('/expert-audit/passages/all').catch(() => ({ data: [] })),
+        certificatAuditeurAPI.getCertificatsDeMonPlant().catch(() => ({ data: [] })), // ✅ NOUVEAU
       ]);
       setCertifs   (rC.status   === 'fulfilled' ? (rC.value.data   || []) : []);
       setBrouillons(rB.status   === 'fulfilled' ? (rB.value.data   || []) : []);
       setTestsTheo (rTT.status  === 'fulfilled' ? (rTT.value.data  || []) : []);
       setTestsPrat (rTP.status  === 'fulfilled' ? (rTP.value.data  || []) : []);
       setPassages  (rAll.status === 'fulfilled' ? (rAll.value.data || []) : []);
+      setCertifsImportes(rImportes.status === 'fulfilled' ? (rImportes.value.data || []) : []); // ✅ NOUVEAU
     } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
   useEffect(() => { const t = searchParams.get('tab'); if (t) setTab(t); }, [searchParams]);
+
+  // ✅ NOUVEAU — Annuler un certificat importé par erreur
+  const handleAnnulerCertifImporte = useCallback(async (certif) => {
+    if (!window.confirm(`Annuler l'import du certificat de ${certif.auditeurNom} ?`)) return;
+    setAnnulingCertifId(certif.id);
+    try {
+      await certificatAuditeurAPI.annuler(certif.id);
+      setCertifsImportes(prev => prev.filter(c => c.id !== certif.id));
+    } catch (e) {
+      alert(e?.response?.data?.message || e.message || 'Impossible d\'annuler ce certificat.');
+    } finally {
+      setAnnulingCertifId(null);
+    }
+  }, []);
 
   const handleActivate = async (id) => {
     setToggling(id);
@@ -1766,10 +1840,18 @@ const counts = {
   </>
 )}
         {tab === 'certifiees' && (
-          <PassageList passages={passages.filter(p => p.statut === 'CERTIFIE' || p.statutCertificat === 'VALIDE_CHEF')}
-            emptyTitle={t('expert.certif.aucunCertifie')} emptyIcon={Ico.ok}
-            onGenererCertif={setGenererCertif}
-            onQr={handleQr} />
+          <>
+            <CertificatsImportesList
+              certifs={certifsImportes}
+              onAnnuler={handleAnnulerCertifImporte}
+              annulingId={annulingCertifId}
+            />
+            <PassageList passages={passages.filter(p => p.statut === 'CERTIFIE' || p.statutCertificat === 'VALIDE_CHEF')}
+              emptyTitle={t('expert.certif.aucunCertifie')} emptyIcon={Ico.ok}
+              onGenererCertif={setGenererCertif}
+              onQr={handleQr}
+              onImporterCertificat={() => setShowImporterCertif(true)} />
+          </>
         )}
 
         {tab === 'bloques' && (
@@ -1828,6 +1910,19 @@ const counts = {
     onClose={() => setQrTarget(null)}
   />
 )}
+
+      {/* ✅ NOUVEAU — Import d'un certificat déjà obtenu (auditeur déjà certifié) */}
+      {showImporterCertif && (
+        <ImporterCertificatModal
+          onClose={() => setShowImporterCertif(false)}
+          onSuccess={() => {
+            setShowImporterCertif(false);
+            certificatAuditeurAPI.getCertificatsDeMonPlant()
+              .then(r => setCertifsImportes(r.data || []))
+              .catch(() => {});
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -43,6 +43,8 @@ public class AuditeurController {
     private final ObjectMapper            objectMapper;
     private final UtilisateurService      utilisateurService;
     private final DefautReferenceService  defautReferenceService;
+    private final ProjetService           projetService;
+    private final SerieService            serieService;
     private final AuditSpecialService     auditSpecialService;
     private final UtilisateurRepository   utilisateurRepository;
     private final AuditProduitService     auditProduitService;
@@ -314,6 +316,33 @@ public class AuditeurController {
                 auditProduitService.modifierAuditParAuditeur(auditId, req, auditeur.getId()));
     }
 
+    // ─── DONNÉES PLANIFICATION (pour le Suivi de l'auditeur) ──────────
+
+    @GetMapping("/segments/{segmentId}/projets")
+    @Operation(summary = "Projets d'un segment (pour ajouter/modifier un audit dans son Suivi)")
+    public ResponseEntity<List<ProjetResponse>> getProjetsBySegment(@PathVariable Integer segmentId) {
+        return ResponseEntity.ok(projetService.getBySegmentId(segmentId));
+    }
+
+    @GetMapping("/projets/{projetId}/series-actives")
+    @Operation(summary = "Séries actives d'un projet (pour ajouter/modifier un audit dans son Suivi)")
+    public ResponseEntity<List<SerieResponse>> getSeriesActivesByProjet(@PathVariable Integer projetId) {
+        return ResponseEntity.ok(serieService.getByProjetActives(projetId));
+    }
+
+    @DeleteMapping("/audits/{auditId}")
+    @Operation(summary = "Supprimer un audit (par l'auditeur, limité à ses propres audits)")
+    public ResponseEntity<String> supprimerAuditParAuditeur(
+            @PathVariable Long auditId,
+            @AuthenticationPrincipal UserDetails user) {
+
+        Utilisateur auditeur = utilisateurRepository.findByMatricule(user.getUsername())
+                .orElseThrow(() -> new BusinessException("Utilisateur introuvable."));
+
+        auditProduitService.supprimerAudit(auditId, auditeur.getId());
+        return ResponseEntity.ok("Audit supprimé.");
+    }
+
     @GetMapping("/mon-plant/auditeurs")
     @Operation(summary = "Liste des auditeurs du même plant (pour réassignation)")
     public ResponseEntity<List<UtilisateurResponse>> getAuditeursMonPlant(
@@ -338,5 +367,16 @@ public class AuditeurController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(result);
+    }
+
+
+
+    // ✅ AJOUTÉ — Toutes les séries d'un projet, actives OU non, pour permettre
+    // à l'auditeur d'affecter son audit à une série d'un mois futur pas encore
+    // active (ex : anticiper la réalisation avant l'activation officielle).
+    @GetMapping("/projets/{projetId}/series")
+    @Operation(summary = "Toutes les séries d'un projet (actives ou non) — pour changer la série d'un audit vers un mois futur")
+    public ResponseEntity<List<SerieResponse>> getToutesSeriesByProjet(@PathVariable Integer projetId) {
+        return ResponseEntity.ok(serieService.getByProjetId(projetId));
     }
 }

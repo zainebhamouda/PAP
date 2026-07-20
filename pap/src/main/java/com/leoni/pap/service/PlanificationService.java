@@ -963,4 +963,15 @@ public class PlanificationService {
                 .map(PlanificationResponse::from)
                 .collect(Collectors.toList());
     }
+
+    /**
+     * Planifications CRÉÉES par l'auditeur uniquement (pour son écran de Suivi,
+     * distinct de getMesPlanificationsAuditeur qui inclut aussi celles où il est
+     * simplement assigné).
+     */
+    public List<PlanificationResponse> getMesPlanificationsCreesAuditeur(Integer auditeurId) {
+        return planifRepo.findPlanificationsCreesParAuditeur(auditeurId).stream()
+                .map(PlanificationResponse::from)
+                .collect(Collectors.toList());
+    }
 }

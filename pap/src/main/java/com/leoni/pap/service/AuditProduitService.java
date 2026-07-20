@@ -79,16 +79,41 @@ public class AuditProduitService {
     /**
      * Audits produit filtrés par planification (appelé par AuditeurController Sprint 3).
      * ✅ MODIFIÉ Sprint 3+ : enrichi avec demandeExtension
+     * ✅ MODIFIÉ — ajout des filtres optionnels projetId / serieId (en plus de
+     *    la planification), pour anticiper les séries d'activation à venir.
      */
     @Transactional(readOnly = true)
     public List<AuditResponse> getMesAuditsProduit(Integer auditeurId, Long planificationId) {
+        return getMesAuditsProduit(auditeurId, planificationId, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AuditResponse> getMesAuditsProduit(Integer auditeurId, Long planificationId,
+                                                   Integer projetId, Integer serieId) {
         List<AuditProduit> audits;
         if (planificationId != null) {
             audits = auditRepo.findByAuditeurIdAndTypeAuditAndPlanificationId(
                     auditeurId, TypeAudit.AUDIT_PRODUIT, planificationId);
+        } else if (projetId != null && serieId != null) {
+            audits = auditRepo.findByAuditeurIdAndTypeAuditAndProjetIdAndSerieId(
+                    auditeurId, TypeAudit.AUDIT_PRODUIT, projetId, serieId);
+        } else if (projetId != null) {
+            audits = auditRepo.findByAuditeurIdAndTypeAuditAndProjetId(
+                    auditeurId, TypeAudit.AUDIT_PRODUIT, projetId);
+        } else if (serieId != null) {
+            audits = auditRepo.findByAuditeurIdAndTypeAuditAndSerieId(
+                    auditeurId, TypeAudit.AUDIT_PRODUIT, serieId);
         } else {
             audits = auditRepo.findByAuditeurIdAndTypeAuditOrderByDatePrevueDesc(
                     auditeurId, TypeAudit.AUDIT_PRODUIT);
+        }
+        // ✅ Si planification ET projet/série sont fournis ensemble, on affine
+        // en mémoire (peu d'audits par planification, donc pas de souci de perf).
+        if (planificationId != null && (projetId != null || serieId != null)) {
+            audits = audits.stream()
+                    .filter(a -> projetId == null || (a.getProjet() != null && projetId.equals(a.getProjet().getId())))
+                    .filter(a -> serieId  == null || (a.getSerie()  != null && serieId.equals(a.getSerie().getId())))
+                    .collect(Collectors.toList());
         }
         // ✅ enrichirAvecDemande remplace le simple .map(AuditResponse::from)
         return audits.stream()
@@ -98,6 +123,86 @@ public class AuditProduitService {
                     return r;
                 })
                 .collect(Collectors.toList());
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // SUIVI ENTRE COLLÈGUES DU MÊME PLANT (lecture seule)
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * ✅ NOUVEAU — Liste les audits produit encore actifs (PLANIFIE ou
+     * EN_COURS) des collègues du MÊME plant que l'auditeur connecté, afin
+     * qu'il puisse suivre l'avancement de leur réalisation. Chaque audit
+     * indique si l'auditeur connecté le suit déjà ({@code suiviParMoi}).
+     */
+    @Transactional(readOnly = true)
+    public List<AuditResponse> getAuditsColleguesMemePlant(Integer auditeurId) {
+        Utilisateur moi = getUser(auditeurId);
+        if (moi.getPlant() == null) return List.of();
+
+        return auditRepo.findAuditsColleguesMemePlant(moi.getPlant().getId(), auditeurId)
+                .stream()
+                .map(a -> {
+                    AuditResponse r = AuditResponse.from(a, auditeurId);
+                    enrichirAvecDemande(r, a.getId());
+                    return r;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * ✅ NOUVEAU — Liste les audits que l'auditeur connecté suit déjà
+     * (onglet "Mon suivi"), avec leur statut à jour en temps réel.
+     */
+    @Transactional(readOnly = true)
+    public List<AuditResponse> getAuditsSuivisPar(Integer auditeurId) {
+        return auditRepo.findAuditsSuivisPar(auditeurId)
+                .stream()
+                .map(a -> {
+                    AuditResponse r = AuditResponse.from(a, auditeurId);
+                    enrichirAvecDemande(r, a.getId());
+                    return r;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * ✅ NOUVEAU — L'auditeur connecté commence à suivre la réalisation d'un
+     * audit d'un collègue du même plant. Purement informatif : contrairement
+     * à une prise en charge, cela ne donne AUCUN droit de modification, de
+     * démarrage ni de clôture sur cet audit — seul l'auditeur d'origine
+     * conserve la main dessus.
+     */
+    public AuditResponse suivreAudit(Long auditId, Integer auditeurId) {
+        AuditProduit audit = getAudit(auditId);
+        Utilisateur moi = getUser(auditeurId);
+
+        if (audit.getTypeAudit() != TypeAudit.AUDIT_PRODUIT) {
+            throw new BusinessException("Seuls les audits produit peuvent être suivis ainsi.");
+        }
+        if (audit.getAuditeur() != null && audit.getAuditeur().getId().equals(auditeurId)) {
+            throw new BusinessException("Il s'agit déjà de l'un de vos propres audits.");
+        }
+        if (audit.getPlant() == null || moi.getPlant() == null
+                || !audit.getPlant().getId().equals(moi.getPlant().getId())) {
+            throw new BusinessException("Vous ne pouvez suivre que les audits de votre propre plant.");
+        }
+
+        audit.getSuiveurs().add(moi);
+        AuditProduit saved = auditRepo.save(audit);
+
+        return AuditResponse.from(saved, auditeurId);
+    }
+
+    /**
+     * ✅ NOUVEAU — L'auditeur connecté arrête de suivre cet audit.
+     */
+    public AuditResponse nePlusSuivreAudit(Long auditId, Integer auditeurId) {
+        AuditProduit audit = getAudit(auditId);
+        Utilisateur moi = getUser(auditeurId);
+        audit.getSuiveurs().remove(moi);
+        AuditProduit saved = auditRepo.save(audit);
+        return AuditResponse.from(saved, auditeurId);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -152,32 +257,8 @@ public class AuditProduitService {
         }
         audit.setStatut(newStatut);
         audit.setDateModification(java.time.LocalDateTime.now());
-
-        // ✅ CORRIGÉ — le bouton "Terminer" (front) passe par cet endpoint
-        // générique et pas par saisirResultats()/terminerParAuditeur(). Sans
-        // ça, dateRealisation restait null pour tout audit terminé par ce
-        // chemin, ce qui le rendait invisible dans le Rapport Mensuel
-        // (Annexe 1A), qui filtre justement sur dateRealisation.
-        if (newStatut == StatutAudit.TERMINE && audit.getDateRealisation() == null) {
-            audit.setDateRealisation(LocalDate.now());
-        }
-
-        AuditProduit saved = auditRepo.save(audit);
-
-        if (newStatut == StatutAudit.TERMINE) {
-            try {
-                rapportMensuelService.regenererPourAudit(saved, null);
-            } catch (Exception e) {
-                log.error("Régénération du rapport mensuel impossible pour l'audit {} (plant={}, {}/{})",
-                        saved.getId(),
-                        saved.getPlant() != null ? saved.getPlant().getNom() : null,
-                        saved.getDateRealisation() != null ? saved.getDateRealisation().getMonthValue() : null,
-                        saved.getDateRealisation() != null ? saved.getDateRealisation().getYear() : null,
-                        e);
-            }
-        }
-
-        return AuditResponse.from(saved);
+        auditRepo.save(audit);
+        return AuditResponse.from(audit);
     }
 
     @Transactional(readOnly = true)
@@ -446,6 +527,8 @@ public class AuditProduitService {
         Utilisateur auditeurConnecte = userRepo.findById(auditeurConnecteId)
                 .orElseThrow(() -> new BusinessException("Utilisateur introuvable."));
 
+        // Seul l'auditeur d'origine peut modifier son audit produit
+        // (le "suivi" par un collègue est purement en lecture seule).
         if (audit.getAuditeur() == null
                 || !audit.getAuditeur().getId().equals(auditeurConnecteId)) {
             throw new BusinessException("Vous ne pouvez modifier que vos propres audits.");
@@ -457,6 +540,8 @@ public class AuditProduitService {
         String oldDomaine        = audit.getDomaine();
         String oldFamille        = audit.getFamilleCablage();
         Utilisateur oldAuditeur  = audit.getAuditeur();
+        // ✅ AJOUTÉ — pour tracer un éventuel changement de série
+        Integer oldSerieId       = audit.getSerie() != null ? audit.getSerie().getId() : null;
 
         if (req.getDatePrevue() != null) audit.setDatePrevue(req.getDatePrevue());
 
@@ -478,6 +563,25 @@ public class AuditProduitService {
         if (req.getFamilleCablage() != null) audit.setFamilleCablage(req.getFamilleCablage());
         if (req.getDomaine()        != null) audit.setDomaine(req.getDomaine());
         if (req.getObservations()   != null) audit.setObservations(req.getObservations());
+
+        // ═══════════════════════════════════════════════════════════
+        // ✅ AJOUTÉ — Changement de série par l'auditeur lui-même.
+        // Contrairement à l'expert qui peut tout changer, l'auditeur ne peut
+        // choisir qu'une série du MÊME projet — mais elle peut être une série
+        // pas encore active (ex : série d'un mois futur), ce qui n'était pas
+        // possible avant car le frontend ne proposait que les séries actives.
+        // ═══════════════════════════════════════════════════════════
+        if (req.getSerieId() != null) {
+            Serie nouvelleSerie = serieRepo.findById(req.getSerieId())
+                    .orElseThrow(() -> new BusinessException("Série introuvable."));
+
+            if (audit.getProjet() != null && nouvelleSerie.getProjet() != null
+                    && !nouvelleSerie.getProjet().getId().equals(audit.getProjet().getId())) {
+                throw new BusinessException("La série choisie doit appartenir au même projet que l'audit.");
+            }
+
+            audit.setSerie(nouvelleSerie);
+        }
 
         // ── Réassignation à un autre auditeur du MÊME plant uniquement ──
         boolean auditeurChange = false;
@@ -504,6 +608,8 @@ public class AuditProduitService {
         if (req.getNatureAudit()    != null && !Objects.equals(oldNature,     saved.getNatureAudit()))   changements.add("nature");
         if (req.getDomaine()        != null && !Objects.equals(oldDomaine,    saved.getDomaine()))       changements.add("domaine");
         if (req.getFamilleCablage() != null && !Objects.equals(oldFamille,    saved.getFamilleCablage())) changements.add("famille câblage");
+        // ✅ AJOUTÉ
+        if (req.getSerieId()        != null && !Objects.equals(oldSerieId, saved.getSerie() != null ? saved.getSerie().getId() : null)) changements.add("série");
         if (auditeurChange) changements.add("auditeur assigné");
 
         if (!changements.isEmpty()) {
@@ -530,7 +636,6 @@ public class AuditProduitService {
 
         return AuditResponse.from(saved);
     }
-
     private void notifierPlantApresModifParAuditeur(AuditProduit audit, Utilisateur auteur, List<String> changements) {
         if (audit.getPlant() == null) return;
         Integer plantId = audit.getPlant().getId();
@@ -946,6 +1051,7 @@ public class AuditProduitService {
         return auditRepo.findById(id)
                 .orElseThrow(() -> new BusinessException("Audit introuvable."));
     }
+
 
     private Utilisateur getUser(Integer id) {
         return userRepo.findById(id)
